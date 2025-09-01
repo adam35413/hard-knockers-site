@@ -7,6 +7,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      integrity="sha512-tM7fDQTD2/JrRhR+5eGMhHqKX4fokXvI16gLngfV2Y6lRRK4cqaYgt6nJ7EGYMB55+w+ucbk2P4I+3e9a7N9ug=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <link rel="stylesheet" href="style.css" />
     <link
       rel="icon"
@@ -42,11 +49,17 @@
       </section>
     </main>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
       const owner = 'adam35413';
       const repo = 'hard-knockers-site';
-      const api = `https://api.github.com/repos/${owner}/${repo}/issues?labels=proposal&state=all&per_page=100`;
+      const api = `https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=100`;
+
+      function isProposal(issue) {
+        const labels = (issue.labels || []).map(l => (l.name || '').toLowerCase());
+        const title = (issue.title || '').toLowerCase();
+        const body = (issue.body || '').toLowerCase();
+        return labels.includes('proposal') || title.includes('rule proposal') || body.includes('rule proposal') || body.includes('## summary');
+      }
 
       function render(items) {
         const container = document.getElementById('gh-proposals');
@@ -79,7 +92,8 @@
           const res = await fetch(api, { cache: 'no-store' });
           if (!res.ok) throw new Error('GitHub API error: ' + res.status);
           const data = await res.json();
-          render(data);
+          const proposals = data.filter(isProposal);
+          render(proposals);
         } catch (e) {
           console.error(e);
           err.textContent = 'Could not load proposals from GitHub right now. Please try again later.';
@@ -108,4 +122,3 @@
     </script>
   </body>
   </html>
-
