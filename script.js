@@ -35,27 +35,45 @@ document.addEventListener('DOMContentLoaded', () => {
   if (subtitle) {
     (async () => {
       const quotes = await loadQuotes();
-      const LS_KEY = 'hkLastQuoteIndex';
-      const getPrevIndex = () => {
-        try {
-          const v = parseInt(localStorage.getItem(LS_KEY), 10);
-          return Number.isFinite(v) ? v : -1;
-        } catch (_) { return -1; }
-      };
-      const setPrevIndex = (i) => {
-        try { localStorage.setItem(LS_KEY, String(i)); } catch (_) {}
-      };
 
-      // Start on a random quote, but avoid repeating the last one shown across reloads.
-      let idx = Math.floor(Math.random() * quotes.length);
-      const lastIdx = getPrevIndex();
-      if (quotes.length > 1 && idx === lastIdx) idx = (idx + 1) % quotes.length;
+      // Storage key migration: previously stored an index; now store the quote text
+      const LS_KEY_TEXT = 'hkLastQuote';
+      const LS_KEY_INDEX = 'hkLastQuoteIndex';
+      const getPrevQuote = () => {
+        try {
+          const q = localStorage.getItem(LS_KEY_TEXT);
+          if (q) return q;
+          const idx = parseInt(localStorage.getItem(LS_KEY_INDEX), 10);
+          if (Number.isFinite(idx) && quotes[idx]) return quotes[idx];
+        } catch (_) {}
+        return null;
+      };
+      const setPrevQuote = (q) => { try { localStorage.setItem(LS_KEY_TEXT, q); } catch (_) {} };
+
+      // Fisher–Yates shuffle (per session order)
+      const shuffled = quotes.slice();
+      const rng = (max) => {
+        const a = new Uint32Array(1);
+        window.crypto && crypto.getRandomValues ? crypto.getRandomValues(a) : (a[0] = Math.random() * 2**32);
+        return a[0] % max;
+      };
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = rng(i + 1);
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+
+      // Avoid showing the same first quote as last session
+      const lastQuote = getPrevQuote();
+      if (shuffled.length > 1 && lastQuote && shuffled[0] === lastQuote) {
+        shuffled.push(shuffled.shift());
+      }
+
+      let idx = 0;
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const advance = () => {
-        const current = idx % quotes.length;
-        const next = quotes[current];
-        setPrevIndex(current);
+        const next = shuffled[idx % shuffled.length];
         idx += 1;
+        setPrevQuote(next);
         if (reduceMotion) {
           subtitle.textContent = next;
           return;
