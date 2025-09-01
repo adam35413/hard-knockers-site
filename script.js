@@ -35,10 +35,26 @@ document.addEventListener('DOMContentLoaded', () => {
   if (subtitle) {
     (async () => {
       const quotes = await loadQuotes();
-      let idx = 0;
+      const LS_KEY = 'hkLastQuoteIndex';
+      const getPrevIndex = () => {
+        try {
+          const v = parseInt(localStorage.getItem(LS_KEY), 10);
+          return Number.isFinite(v) ? v : -1;
+        } catch (_) { return -1; }
+      };
+      const setPrevIndex = (i) => {
+        try { localStorage.setItem(LS_KEY, String(i)); } catch (_) {}
+      };
+
+      // Start on a random quote, but avoid repeating the last one shown across reloads.
+      let idx = Math.floor(Math.random() * quotes.length);
+      const lastIdx = getPrevIndex();
+      if (quotes.length > 1 && idx === lastIdx) idx = (idx + 1) % quotes.length;
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const advance = () => {
-        const next = quotes[idx % quotes.length];
+        const current = idx % quotes.length;
+        const next = quotes[current];
+        setPrevIndex(current);
         idx += 1;
         if (reduceMotion) {
           subtitle.textContent = next;
