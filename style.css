@@ -88,7 +88,15 @@ nav a:hover {
   justify-content: center;
   text-align: center;
   /* Use the Ted Lasso inspired hero illustration as the header background */
-  background-image: url('hero-ted.png');
+  background-image: url('hero-ted.png'); /* base fallback */
+  background-image: image-set(
+    url('hero-ted.webp') type('image/webp'),
+    url('hero-ted.png') type('image/png')
+  );
+  background-image: -webkit-image-set(
+    url('hero-ted.webp') type('image/webp'),
+    url('hero-ted.png') type('image/png')
+  );
   background-size: cover;
   background-position: center;
   color: var(--text-color);
@@ -172,6 +180,8 @@ main {
   width: 100%;
   border-radius: var(--card-radius);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  /* Hint intrinsic size to reduce CLS on slow connections */
+  aspect-ratio: 16 / 9;
 }
 
 /* Rules list */
@@ -206,6 +216,7 @@ main {
   display: block;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  aspect-ratio: 3 / 4;
 }
 
 /* Standings table */
