@@ -9,12 +9,12 @@
 
 /* Colour palette */
 :root {
-  /* Ted Lasso inspired palette */
-  --primary-color: #003da5; /* royal blue inspired by AFC Richmond jerseys */
-  --secondary-color: #002d62; /* slightly darker blue for panels */
-  --accent-color: #ffc72c; /* golden yellow reminiscent of the Believe sign */
+  /* Neutral dark slate palette */
+  --primary-color: #111827; /* slate-900 */
+  --secondary-color: #1f2937; /* slate-800 for panels */
+  --accent-color: #ffc72c; /* golden yellow accent */
   --text-color: #ffffff; /* crisp white text for contrast */
-  --muted-text: #d4dceb; /* muted light blue for descriptions */
+  --muted-text: #cbd5e1; /* slate-300 for descriptions */
   --border-color: rgba(255, 255, 255, 0.08);
   --card-radius: 8px;
 }
@@ -52,7 +52,7 @@ nav {
   z-index: 100;
   transition: background 0.3s ease;
   /* semi‑transparent primary colour for nav bar */
-  background: rgba(0, 61, 165, 0.8);
+  background: rgba(17, 24, 39, 0.8);
   backdrop-filter: blur(5px);
 }
 
