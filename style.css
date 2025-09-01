@@ -167,6 +167,13 @@ main {
   margin-bottom: 1.5rem;
 }
 
+/* Draft day photo */
+.draft-photo img {
+  width: 100%;
+  border-radius: var(--card-radius);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
 /* Rules list */
 .rules ol {
   margin-left: 1.3rem;
