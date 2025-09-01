@@ -7,6 +7,21 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Mobile nav toggle
+  const nav = document.querySelector('nav');
+  const navToggle = document.querySelector('.nav-toggle');
+  if (nav && navToggle) {
+    navToggle.addEventListener('click', () => {
+      const open = nav.classList.toggle('open');
+      navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.querySelectorAll('nav .nav-links a').forEach((a) =>
+      a.addEventListener('click', () => {
+        nav.classList.remove('open');
+        navToggle.setAttribute('aria-expanded', 'false');
+      })
+    );
+  }
   // Sample NFL scores used when the API is not available.
   const sampleScores = [
     { away: 'Cowboys', awayScore: 21, home: 'Eagles', homeScore: 24 },
