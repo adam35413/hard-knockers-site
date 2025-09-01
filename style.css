@@ -61,6 +61,8 @@ nav .logo {
   font-size: 1.6rem;
   color: var(--accent-color);
 }
+nav .logo a { color: var(--accent-color); text-decoration: none; }
+nav .logo a:hover { color: var(--accent-color); }
 
 nav ul {
   list-style: none;
