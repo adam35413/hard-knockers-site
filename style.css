@@ -282,6 +282,27 @@ tr:hover {
   margin-bottom: 0;
 }
 
+/* NFL scores */
+#scores-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.score-card {
+  background-color: var(--secondary-color);
+  padding: 1rem;
+  border-radius: var(--card-radius);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: space-between;
+}
+
+.score-card .team {
+  display: flex;
+  align-items: center;
+}
+
 /* Footer */
 footer {
   text-align: center;
