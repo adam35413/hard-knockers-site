@@ -9,48 +9,60 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Rotating hero subtitle quotes
   const subtitle = document.getElementById('subtitle');
-  const quotes = [
-    "Draft day: where hope outruns homework.",
-    "Trust the process? I barely trust my bench.",
-    "Questionable (Q) is my love language.",
-    "My waiver claims are 90% apologies.",
-    "I don’t rebuild, I emotionally hedge.",
-    "If projections were real, I’d be a champion.",
-    "Set lineup, say a prayer, avoid Thursday tilt.",
-    "Trade calculators can’t measure bad vibes.",
-    "Bye weeks build character (and ulcers).",
-    "Fantasy: where we yell at TVs about decimals."
-  ];
-  if (subtitle) {
-    let idx = 0;
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const advance = () => {
-      const next = quotes[idx % quotes.length];
-      idx += 1;
-      if (reduceMotion) {
-        subtitle.textContent = next;
-        return;
-        }
-      // Fade out, swap text, fade in
-      subtitle.style.opacity = '0';
-      setTimeout(() => {
-        subtitle.textContent = next;
-        subtitle.style.opacity = '1';
-      }, 250);
-    };
-    // Initial quote
-    advance();
-    if (!reduceMotion) {
-      let timer = setInterval(advance, 8000); // slower rotation
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-          clearInterval(timer);
-        } else {
-          advance();
-          timer = setInterval(advance, 8000);
-        }
-      });
+  async function loadQuotes() {
+    try {
+      const res = await fetch('quotes.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error('Failed to load quotes');
+      const arr = await res.json();
+      return Array.isArray(arr) && arr.length ? arr : null;
+    } catch (e) {
+      console.warn('Using built-in quotes fallback:', e);
+      return [
+        "Draft day: where hope outruns homework.",
+        "Trust the process? I barely trust my bench.",
+        "Questionable (Q) is my love language.",
+        "My waiver claims are 90% apologies.",
+        "I don’t rebuild, I emotionally hedge.",
+        "If projections were real, I’d be a champion.",
+        "Set lineup, say a prayer, avoid Thursday tilt.",
+        "Trade calculators can’t measure bad vibes.",
+        "Bye weeks build character (and ulcers).",
+        "Fantasy: where we yell at TVs about decimals."
+      ];
     }
+  }
+
+  if (subtitle) {
+    (async () => {
+      const quotes = await loadQuotes();
+      let idx = 0;
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const advance = () => {
+        const next = quotes[idx % quotes.length];
+        idx += 1;
+        if (reduceMotion) {
+          subtitle.textContent = next;
+          return;
+        }
+        subtitle.style.opacity = '0';
+        setTimeout(() => {
+          subtitle.textContent = next;
+          subtitle.style.opacity = '1';
+        }, 250);
+      };
+      advance();
+      if (!reduceMotion) {
+        let timer = setInterval(advance, 8000);
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            clearInterval(timer);
+          } else {
+            advance();
+            timer = setInterval(advance, 8000);
+          }
+        });
+      }
+    })();
   }
   // Mobile nav toggle
   const nav = document.querySelector('nav');
