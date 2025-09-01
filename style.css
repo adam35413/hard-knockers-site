@@ -191,6 +191,14 @@ main {
   line-height: 1.4;
 }
 
+/* Loser's jersey image styling */
+.loser-jersey {
+  max-width: 200px;
+  margin-top: 0.5rem;
+  display: block;
+  border-radius: 8px;
+}
+
 /* Standings table */
 .table-container {
   overflow-x: auto;
