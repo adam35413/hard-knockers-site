@@ -285,6 +285,13 @@ tr:hover {
   margin-top: 0.5rem;
 }
 
+/* Proposal actions (replaces local form) */
+.proposal-actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
 /* Proposals list */
 #proposals-list {
   margin-top: 2rem;
@@ -335,6 +342,42 @@ tr:hover {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   display: flex;
   justify-content: space-between;
+}
+
+/* Proposals page cards */
+.proposal-list {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.proposal-card {
+  background-color: var(--secondary-color);
+  padding: 1rem 1.2rem;
+  border-radius: var(--card-radius);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.proposal-card h3 {
+  margin-bottom: 0.4rem;
+}
+
+.proposal-card .muted {
+  color: var(--muted-text);
+  font-size: 0.9rem;
+  margin-bottom: 0.6rem;
+}
+
+.proposal-card .labels .badge {
+  display: inline-block;
+  margin-right: 0.4rem;
+  margin-bottom: 0.4rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-color);
+  font-size: 0.8rem;
 }
 
 .score-card .team {
