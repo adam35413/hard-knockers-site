@@ -28,7 +28,8 @@
       <div class="logo">Hard Knockers</div>
       <ul>
         <li><a href="#rules">Rules</a></li>
-        <li><a href="#standings">Standings</a></li>
+        <li><a href="#nfl-scores">NFL Scores</a></li>
+        <li><a href="#yahoo">Yahoo Sign In</a></li>
         <li><a href="#proposals">Propose a Rule</a></li>
       </ul>
     </nav>
@@ -55,27 +56,19 @@
           </ol>
       </section>
 
-      <!-- Standings Section -->
-      <section id="standings" class="section standings">
-        <h2><i class="fa-solid fa-table-list"></i> Current Standings</h2>
-        <p>The table below shows the latest standings. Rankings are determined by win/loss record and total points scored.</p>
-        <button id="yahoo-login" class="cta">Connect Yahoo</button>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Team</th>
-                <th>Record (W‑L)</th>
-                <th>Points For</th>
-                <th>Points Against</th>
-              </tr>
-            </thead>
-            <tbody id="standings-body">
-              <!-- Populated by JavaScript -->
-            </tbody>
-          </table>
+      <!-- NFL Scores Section -->
+      <section id="nfl-scores" class="section nfl-scores">
+        <h2><i class="fa-solid fa-football"></i> NFL Scores &ndash; Last Week</h2>
+        <div id="scores-list">
+          <!-- Populated by JavaScript -->
         </div>
+      </section>
+
+      <!-- Yahoo Sign In Section -->
+      <section id="yahoo" class="section yahoo">
+        <h2><i class="fa-brands fa-yahoo"></i> Yahoo Sports</h2>
+        <p>Sign in to Yahoo Sports to access league features.</p>
+        <button id="yahoo-login" class="cta">Sign in with Yahoo</button>
       </section>
 
       <!-- Proposals Section -->

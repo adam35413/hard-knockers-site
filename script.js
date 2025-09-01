@@ -1,24 +1,19 @@
 /*
  * Fantasy Football League client logic
  *
- * This script populates the standings table from a simple array, handles rule proposal submissions
+ * This script fetches recent NFL scores, handles rule proposal submissions
  * using localStorage, and updates dynamic elements like the current year. Data is kept
- * client‑side to support static hosting environments (e.g. GitHub Pages or Netlify).  
+ * client‑side to support static hosting environments (e.g. GitHub Pages or Netlify).
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Sample standings data used when the Yahoo API is not available.
-  const sampleStandings = [
-    { team: 'Gridiron Gurus', wins: 10, losses: 3, pointsFor: 1550, pointsAgainst: 1300 },
-    { team: 'Pigskin Wizards', wins: 9, losses: 4, pointsFor: 1487, pointsAgainst: 1321 },
-    { team: 'End Zone Enforcers', wins: 8, losses: 5, pointsFor: 1422, pointsAgainst: 1360 },
-    { team: 'Monday Night Maniacs', wins: 8, losses: 5, pointsFor: 1408, pointsAgainst: 1345 },
-    { team: 'Touchdown Titans', wins: 7, losses: 6, pointsFor: 1380, pointsAgainst: 1395 },
-    { team: 'Hail Mary Heroes', wins: 6, losses: 7, pointsFor: 1295, pointsAgainst: 1421 },
-    { team: 'Fourth & Longshots', wins: 5, losses: 8, pointsFor: 1258, pointsAgainst: 1430 },
-    { team: 'Draft Day Darlings', wins: 4, losses: 9, pointsFor: 1194, pointsAgainst: 1442 },
-    { team: 'Blitz Brigade', wins: 3, losses: 10, pointsFor: 1102, pointsAgainst: 1504 },
-    { team: 'Bye Week Bums', wins: 3, losses: 10, pointsFor: 1099, pointsAgainst: 1520 }
+  // Sample NFL scores used when the API is not available.
+  const sampleScores = [
+    { away: 'Cowboys', awayScore: 21, home: 'Eagles', homeScore: 24 },
+    { away: 'Patriots', awayScore: 17, home: 'Dolphins', homeScore: 20 },
+    { away: 'Packers', awayScore: 27, home: 'Bears', homeScore: 23 },
+    { away: 'Giants', awayScore: 14, home: 'Commanders', homeScore: 18 },
+    { away: '49ers', awayScore: 30, home: 'Seahawks', homeScore: 28 }
   ];
 
   /**
@@ -38,94 +33,65 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Fetch standings from Yahoo Fantasy Sports API.
+   * Fetch NFL scores for the past week from ESPN's public scoreboard API.
+   * Falls back to sample data if the request fails.
    *
-   * The user must provide a league key and Yahoo OAuth client ID below. After
-   * authorizing with Yahoo the access token is stored in localStorage under the
-   * key `yahooAccessToken`.
-   *
-   * @returns {Promise<Array>} resolved with an array of team objects
+   * @returns {Promise<Array>} resolved with an array of score objects
    */
-  async function fetchYahooStandings() {
-    const leagueKey = 'YOUR_LEAGUE_KEY'; // e.g. '402.l.12345'
-    const token = localStorage.getItem('yahooAccessToken');
-    if (!token) throw new Error('No Yahoo OAuth token present');
-
-    const url = `https://fantasysports.yahooapis.com/fantasy/v2/league/${leagueKey}/standings?format=json`;
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (!res.ok) {
-      throw new Error(`Yahoo API error: ${res.status}`);
-    }
+  async function fetchNflScores() {
+    const today = new Date();
+    const lastWeek = new Date();
+    lastWeek.setDate(today.getDate() - 7);
+    const format = (d) => d.toISOString().slice(0, 10).replace(/-/g, '');
+    const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${format(
+      lastWeek
+    )}-${format(today)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`NFL API error: ${res.status}`);
     const json = await res.json();
-
-    const teamsData = json.fantasy_content.league[1].standings[0].teams;
-    const result = [];
-    Object.keys(teamsData).forEach((key) => {
-      if (key === 'count') return;
-      const teamArr = teamsData[key].team;
-      let name = '';
-      let wins = 0;
-      let losses = 0;
-      let pointsFor = 0;
-      let pointsAgainst = 0;
-      teamArr.forEach((entry) => {
-        if (entry.name) {
-          name = entry.name;
-        }
-        if (entry.team_standings) {
-          const standings = entry.team_standings;
-          if (standings.outcome_totals) {
-            wins = parseInt(standings.outcome_totals.wins, 10);
-            losses = parseInt(standings.outcome_totals.losses, 10);
-          }
-          pointsFor = parseFloat(standings.points_for);
-          pointsAgainst = parseFloat(standings.points_against);
-        }
-      });
-      result.push({ team: name, wins, losses, pointsFor, pointsAgainst });
+    const events = json.events || [];
+    return events.map((ev) => {
+      const comp = ev.competitions[0];
+      const home = comp.competitors.find((c) => c.homeAway === 'home');
+      const away = comp.competitors.find((c) => c.homeAway === 'away');
+      return {
+        home: home.team.displayName,
+        homeScore: home.score,
+        away: away.team.displayName,
+        awayScore: away.score
+      };
     });
-    return result;
   }
 
   /**
-   * Render the standings table based on the standings array provided.
-   * Rankings are calculated by wins (descending) and pointsFor as tiebreaker.
-   *
-   * @param {Array} standingsArr
+   * Render NFL scores into the scores list.
+   * @param {Array} scoresArr
    */
-  function renderStandings(standingsArr) {
-    const sorted = [...standingsArr].sort((a, b) => {
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      return b.pointsFor - a.pointsFor;
-    });
-    const tbody = document.getElementById('standings-body');
-    tbody.innerHTML = '';
-    sorted.forEach((team, index) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${index + 1}</td>
-        <td>${team.team}</td>
-        <td>${team.wins}–${team.losses}</td>
-        <td>${team.pointsFor}</td>
-        <td>${team.pointsAgainst}</td>
+  function renderScores(scoresArr) {
+    const list = document.getElementById('scores-list');
+    list.innerHTML = '';
+    scoresArr.forEach((game) => {
+      const div = document.createElement('div');
+      div.classList.add('score-card');
+      div.innerHTML = `
+        <span class="team away">${game.away} <strong>${game.awayScore}</strong></span>
+        <span class="team home"><strong>${game.homeScore}</strong> ${game.home}</span>
       `;
-      tbody.appendChild(tr);
+      list.appendChild(div);
     });
   }
 
   /**
-   * Initialize standings using Yahoo data if possible, otherwise fall back to
+   * Initialize NFL scores using ESPN data if possible, otherwise fall back to
    * the sample array above.
    */
-  async function initStandings() {
+  async function initScores() {
     try {
-      const yahooStandings = await fetchYahooStandings();
-      renderStandings(yahooStandings);
+      const scores = await fetchNflScores();
+      renderScores(scores);
     } catch (err) {
-      console.error('Falling back to sample standings:', err);
-      renderStandings(sampleStandings);
+      console.error('Falling back to sample NFL scores:', err);
+      renderScores(sampleScores);
     }
   }
 
@@ -161,9 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProposals();
   }
 
-  // Process any OAuth response from Yahoo and load standings/proposals
+  // Process any OAuth response from Yahoo and load scores/proposals
   handleOAuthRedirect();
-  initStandings();
+  initScores();
   loadProposals();
 
   // Allow user to initiate Yahoo OAuth if a client ID is provided
