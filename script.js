@@ -17,22 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
 
   /**
-   * Parse an OAuth access token from the URL fragment if present and store it
-   * in localStorage. This supports Yahoo's implicit OAuth 2.0 flow.
-   */
-  function handleOAuthRedirect() {
-    if (window.location.hash.includes('access_token')) {
-      const params = new URLSearchParams(window.location.hash.substring(1));
-      const token = params.get('access_token');
-      if (token) {
-        localStorage.setItem('yahooAccessToken', token);
-        // Remove the fragment so it doesn't clutter bookmarks/refreshes
-        history.replaceState(null, '', window.location.pathname);
-      }
-    }
-  }
-
-  /**
    * Fetch NFL scores for the past week from ESPN's public scoreboard API.
    * Falls back to sample data if the request fails.
    *
@@ -127,21 +111,9 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProposals();
   }
 
-  // Process any OAuth response from Yahoo and load scores/proposals
-  handleOAuthRedirect();
+  // Load scores and any saved proposals
   initScores();
   loadProposals();
-
-  // Allow user to initiate Yahoo OAuth if a client ID is provided
-  const loginBtn = document.getElementById('yahoo-login');
-  if (loginBtn) {
-    loginBtn.addEventListener('click', () => {
-      const clientId = 'YOUR_CLIENT_ID'; // Register an app at developer.yahoo.com
-      const redirectUri = window.location.href.split('#')[0];
-      const authUrl = `https://api.login.yahoo.com/oauth2/request_auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token`;
-      window.location.href = authUrl;
-    });
-  }
 
   // Handle proposal submission
   const form = document.getElementById('proposal-form');
