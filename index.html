@@ -21,6 +21,8 @@
       referrerpolicy="no-referrer"
     />
     <link rel="stylesheet" href="style.css" />
+    <!-- Preload hero background to reduce LCP delay -->
+    <link rel="preload" as="image" href="hero-ted.png" />
     <!-- Favicon: emoji football as inline SVG -->
     <link
       rel="icon"
@@ -53,7 +55,7 @@
     <main>
       <!-- Draft Photo Section -->
       <section id="draft-photo" class="section draft-photo">
-        <img src="group.jpg" alt="Hard Knockers draft day" />
+        <img src="group.jpg" alt="Hard Knockers draft day" loading="lazy" decoding="async" fetchpriority="low" />
       </section>
 
       <!-- League Basics Section -->
@@ -66,7 +68,7 @@
           <li>Third place: 10%</li>
           <li>Bitch Bowl Winner (Losers Bracket Winner): $50 bucks</li>
           <li>Last place: must wear the Losers Jersey at the next draft.<br />
-            <img src="loser-jersey.jpeg" alt="Loser's Jersey" class="loser-jersey" />
+            <img src="loser-jersey.jpeg" alt="Loser's Jersey" class="loser-jersey" loading="lazy" decoding="async" fetchpriority="low" />
           </li>
         </ul>
       </section>

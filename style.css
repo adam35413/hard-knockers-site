@@ -172,6 +172,8 @@ main {
   width: 100%;
   border-radius: var(--card-radius);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  /* Hint intrinsic size to reduce CLS on slow connections */
+  aspect-ratio: 16 / 9;
 }
 
 /* Rules list */
@@ -206,6 +208,7 @@ main {
   display: block;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  aspect-ratio: 3 / 4;
 }
 
 /* Standings table */
