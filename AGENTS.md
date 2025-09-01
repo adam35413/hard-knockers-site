@@ -1,11 +1,13 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `index.html`: Single-page app shell and content sections.
-- `style.css`: Site styles (CSS variables in `:root`).
-- `script.js`: Client logic (scores, proposals, footer year).
-- Assets: `group.jpg`, `hero-ted.png`, `loser-jersey.jpeg`.
-- Meta: `.git/`, optional agent notes in `CLAUDE.md`.
+- `index.html`: Main page (hero, basics, by‑laws, scores, proposal CTAs).
+- `proposals.html`: Review proposals from GitHub Issues (filters + badges).
+- `style.css`: Global styles (theme vars in `:root`, responsive nav, components).
+- `script.js`: Client logic (mobile nav, quotes rotation, ESPN scores, proposals fetch helper).
+- `quotes.json`: 100 rotating hero subtitle quotes.
+- Assets: `*.webp` preferred with PNG/JPEG fallbacks.
+- Meta: `.github/ISSUE_TEMPLATE/proposal.md`, `.git/`, `CLAUDE.md`.
 
 ## Build, Test, and Development Commands
 - Local preview: `python3 -m http.server 8080` then open `http://localhost:8080/index.html`.
@@ -40,6 +42,18 @@
 - Publish: merging to `main` updates the site within a few minutes; check the Pages URL in Settings.
 - Custom domain: add a `CNAME` file at repo root with your domain and configure a DNS CNAME to `<user>.github.io`.
 - Cache busting: change asset filenames or append query strings (e.g., `style.css?v=2`).
+
+## Proposals Workflow
+- Submit via GitHub Issues: template labels new issues as `proposal`.
+- Review in `proposals.html`: pulls issues (PRs excluded), shows status badges; closed and not `accepted` → treated as Rejected.
+- Labels: use `accepted` to elevate, optional `rejected`.
+
+## Editing Tips
+- Quotes: edit `quotes.json`. Rotation and fade handled in `script.js` (respects reduced‑motion; shuffles per session).
+- Theme: adjust colors in `:root`; hero subtitle styles under `#hero p` and `#subtitle`.
+- Mobile nav: markup in both HTML files; behavior in `script.js` (hamburger toggle adds `nav.open`).
+- ESPN scores: see `fetchNflScores`, `renderScores`, and `showScoresError` in `script.js`.
+- Rules: edit By‑Laws list in `index.html` (jersey rule + image live here).
 
 ## Agent-Specific Notes
 - Keep edits surgical; match existing style and structure.

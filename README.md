@@ -21,3 +21,12 @@ A simple, static website for the Hard Knockers Fantasy Football League. Built wi
 ## Notes
 - ESPN scores fetch is best-effort and may fall back to a message if unavailable.
 - Images use WebP with JPEG/PNG fallbacks for performance.
+
+## Editing Guide
+- Quotes: update `quotes.json` (hero subtitle rotates every 8s, with fade and per‑session shuffle).
+- Theme: tweak colors in `style.css` `:root`; subtitle legibility in `#hero p` and `#subtitle`.
+- Mobile navigation: HTML structure in `index.html`/`proposals.html` (`.nav-toggle`, `.nav-links`), behavior in `script.js` (`nav.open`).
+- ESPN scores: logic in `script.js` (`fetchNflScores`, `showScoresError`, `renderScores`).
+- Rules and copy: edit By‑Laws and Basics in `index.html` (loser jersey rule + image under By‑Laws).
+- Proposals review: client loads Issues via GitHub API (issues only; PRs excluded). Labels `accepted`/`rejected` control badges.
+- Cache busting: append query strings to CSS/JS when needed (e.g., `style.css?v=YYYYMMDD`).
