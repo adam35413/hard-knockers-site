@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hard Knockers Fantasy Football League</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      integrity="sha512-tM7fDQTD2/JrRhR+5eGMhHqKX4fokXvI16gLngfV2Y6lRRK4cqaYgt6nJ7EGYMB55+w+ucbk2P4I+3e9a7N9ug=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav>
+      <div class="logo">Hard Knockers</div>
+      <ul>
+        <li><a href="#rules">Rules</a></li>
+        <li><a href="#standings">Standings</a></li>
+        <li><a href="#proposals">Propose a Rule</a></li>
+      </ul>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="hero">
+      <div id="hero-content">
+        <h1>Hard Knockers</h1>
+        <p>Where optimism meets strategy&nbsp;&mdash;&nbsp;your Hard Knockers rulebook &amp; standings hub</p>
+        <a href="#rules" class="cta">View Rules</a>
+      </div>
+    </header>
+
+    <main>
+      <!-- Rules Section -->
+      <section id="rules" class="section rules">
+        <h2><i class="fa-solid fa-book-open"></i> League Rules</h2>
+        <p>Below is a concise overview of our league&rsquo;s rules. These govern roster construction, scoring, waivers and fair play. Reach out to the commissioner if you have any questions!</p>
+        <ol>
+          <li>Rosters consist of 1 Quarterback, 2 Running Backs, 2 Wide Receivers, 1 Tight End, 1 Flex (RB/WR/TE), 1 Kicker and 1 Defense/Special Teams.</li>
+          <li>The draft is a snake draft with randomly determined order. Draft order reverses each round.</li>
+          <li>Scoring is half‑point PPR: 6 points per TD (rush/rec), 4 points per passing TD, 0.5 point per reception, 1 point per 10 rushing/receiving yards and 1 point per 25 passing yards.</li>
+          <li>Waivers are processed weekly using FAAB (Free Agent Acquisition Budget). Each team begins the season with 100 FAAB dollars.</li>
+          <li>Trades must be completed by Week 10 and will be reviewed by the commissioner for fairness.</li>
+          <li>The regular season runs through Week 14. Playoffs begin Week 15 with the top four teams competing in a two‑round, single‑elimination format.</li>
+          <li>Unsportsmanlike conduct, collusion or tanking will result in penalties up to removal from the league.</li>
+        </ol>
+      </section>
+
+      <!-- Standings Section -->
+      <section id="standings" class="section standings">
+        <h2><i class="fa-solid fa-table-list"></i> Current Standings</h2>
+        <p>The table below shows the latest standings. Rankings are determined by win/loss record and total points scored.</p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Team</th>
+                <th>Record (W‑L)</th>
+                <th>Points For</th>
+                <th>Points Against</th>
+              </tr>
+            </thead>
+            <tbody id="standings-body">
+              <!-- Populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Proposals Section -->
+      <section id="proposals" class="section proposals">
+        <h2><i class="fa-solid fa-lightbulb"></i> Propose a Rule</h2>
+        <p>Have an idea to improve the league? Share your rule proposal below. Your fellow owners will be able to review and discuss suggestions.</p>
+        <form id="proposal-form">
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" placeholder="Your Name" required />
+          </div>
+          <div class="form-group">
+            <label for="proposal">Proposal</label>
+            <textarea id="proposal" name="proposal" placeholder="Describe your rule change…" rows="4" required></textarea>
+          </div>
+          <button type="submit" class="cta">Submit Proposal</button>
+        </form>
+        <div id="proposals-list">
+          <!-- Suggestions will appear here -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <p>&copy; <span id="year"></span> Hard Knockers Fantasy Football League. All rights reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
