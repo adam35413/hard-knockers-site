@@ -87,12 +87,15 @@
           el.innerHTML = `
             <h3>${issue.title}</h3>
             <p class="muted">#${issue.number} • by ${issue.user.login} • ${created}</p>
+            <div class="status-line"><span class="status-badge status-${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></div>
             <div class="labels">${labels}</div>
             <p><a class="cta" href="${issue.html_url}" target="_blank" rel="noopener">View discussion</a></p>
           `;
           container.appendChild(el);
         }
       }
+
+      let currentFilter = 'open';
 
       async function loadIssues() {
         const err = document.getElementById('gh-error');
@@ -103,6 +106,7 @@
           const data = await res.json();
           const proposals = data.filter(isProposal);
           render(proposals);
+          applyFilter(currentFilter);
         } catch (e) {
           console.error(e);
           err.textContent = 'Could not load proposals from GitHub right now. Please try again later.';
@@ -110,16 +114,22 @@
         }
       }
 
+      function applyFilter(val) {
+        currentFilter = val;
+        const buttons = document.querySelectorAll('.proposal-filters [data-filter]');
+        buttons.forEach(b => b.classList.toggle('active', b.dataset.filter === val));
+        const cards = document.querySelectorAll('.proposal-card');
+        cards.forEach(card => {
+          const show = val === 'all' || card.dataset.status === val;
+          card.style.display = show ? '' : 'none';
+        });
+      }
+
       function setupFilters() {
         const buttons = document.querySelectorAll('.proposal-filters [data-filter]');
         buttons.forEach(btn => {
           btn.addEventListener('click', () => {
-            const val = btn.dataset.filter;
-            const cards = document.querySelectorAll('.proposal-card');
-            cards.forEach(card => {
-              const show = val === 'all' || card.dataset.status === val;
-              card.style.display = show ? '' : 'none';
-            });
+            applyFilter(btn.dataset.filter);
           });
         });
       }
@@ -127,6 +137,8 @@
       document.addEventListener('DOMContentLoaded', () => {
         loadIssues();
         setupFilters();
+        // Default view: Open
+        applyFilter('open');
       });
     </script>
   </body>

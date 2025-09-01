@@ -380,6 +380,40 @@ tr:hover {
   font-size: 0.8rem;
 }
 
+.status-line {
+  margin: 0.4rem 0 0.6rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.status-open {
+  background: rgba(52, 152, 219, 0.18);
+  color: #3498db;
+  border: 1px solid rgba(52, 152, 219, 0.35);
+}
+
+.status-accepted {
+  background: rgba(46, 204, 113, 0.18);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.35);
+}
+
+.status-rejected {
+  background: rgba(231, 76, 60, 0.18);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.35);
+}
+
+.proposal-filters .cta.active {
+  outline: 2px solid var(--accent-color);
+}
+
 .score-card .team {
   display: flex;
   align-items: center;
