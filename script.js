@@ -7,6 +7,40 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Rotating hero subtitle quotes
+  const subtitle = document.getElementById('subtitle');
+  const quotes = [
+    "Draft day: where hope outruns homework.",
+    "Trust the process? I barely trust my bench.",
+    "Questionable (Q) is my love language.",
+    "My waiver claims are 90% apologies.",
+    "I don’t rebuild, I emotionally hedge.",
+    "If projections were real, I’d be a champion.",
+    "Set lineup, say a prayer, avoid Thursday tilt.",
+    "Trade calculators can’t measure bad vibes.",
+    "Bye weeks build character (and ulcers).",
+    "Fantasy: where we yell at TVs about decimals."
+  ];
+  if (subtitle) {
+    let idx = 0;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const setQuote = () => {
+      subtitle.textContent = quotes[idx % quotes.length];
+      idx += 1;
+    };
+    setQuote();
+    if (!reduceMotion) {
+      let timer = setInterval(setQuote, 5000);
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          clearInterval(timer);
+        } else {
+          setQuote();
+          timer = setInterval(setQuote, 5000);
+        }
+      });
+    }
+  }
   // Mobile nav toggle
   const nav = document.querySelector('nav');
   const navToggle = document.querySelector('.nav-toggle');
