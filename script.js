@@ -23,28 +23,44 @@ document.addEventListener('DOMContentLoaded', () => {
    * @returns {Promise<Array>} resolved with an array of score objects
    */
   async function fetchNflScores() {
-    const today = new Date();
-    const lastWeek = new Date();
-    lastWeek.setDate(today.getDate() - 7);
+    // ESPN's scoreboard often expects a single date; try today then walk back up to 7 days.
     const format = (d) => d.toISOString().slice(0, 10).replace(/-/g, '');
-    const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${format(
-      lastWeek
-    )}-${format(today)}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`NFL API error: ${res.status}`);
-    const json = await res.json();
-    const events = json.events || [];
-    return events.map((ev) => {
-      const comp = ev.competitions[0];
-      const home = comp.competitors.find((c) => c.homeAway === 'home');
-      const away = comp.competitors.find((c) => c.homeAway === 'away');
-      return {
-        home: home.team.displayName,
-        homeScore: home.score,
-        away: away.team.displayName,
-        awayScore: away.score
-      };
-    });
+    const toScores = (events) =>
+      events.map((ev) => {
+        const comp = ev.competitions?.[0];
+        const home = comp?.competitors?.find((c) => c.homeAway === 'home');
+        const away = comp?.competitors?.find((c) => c.homeAway === 'away');
+        return (
+          home && away && {
+            home: home.team.displayName,
+            homeScore: home.score,
+            away: away.team.displayName,
+            awayScore: away.score
+          }
+        );
+      }).filter(Boolean);
+
+    const today = new Date();
+    for (let offset = 0; offset <= 7; offset++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - offset);
+      const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${format(d)}`;
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) continue;
+        const json = await res.json();
+        const events = json.events || [];
+        if (events.length > 0) {
+          const parsed = toScores(events);
+          if (parsed.length > 0) return parsed;
+        }
+      } catch (e) {
+        // Try the next day back on network/CORS failure.
+        continue;
+      }
+    }
+    // No events found in the last week.
+    return [];
   }
 
   /**
@@ -66,16 +82,35 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
+   * Show a fantasy-themed error notice in the scores area.
+   * @param {string} message
+   */
+  function showScoresError(message) {
+    const list = document.getElementById('scores-list');
+    const notice = document.createElement('div');
+    notice.className = 'score-error';
+    notice.textContent = message;
+    // Prepend so it appears above any fallback content
+    list.innerHTML = '';
+    list.appendChild(notice);
+  }
+
+  /**
    * Initialize NFL scores using ESPN data if possible, otherwise fall back to
    * the sample array above.
    */
   async function initScores() {
     try {
       const scores = await fetchNflScores();
-      renderScores(scores);
+      if (!scores || scores.length === 0) {
+        console.warn('No recent ESPN scores found; showing message only.');
+        showScoresError("The live scoreboard got benched this week — try again soon.");
+      } else {
+        renderScores(scores);
+      }
     } catch (err) {
-      console.error('Falling back to sample NFL scores:', err);
-      renderScores(sampleScores);
+      console.error('ESPN scores fetch failed:', err);
+      showScoresError("We couldn’t pick up the ESPN play-by-play — please try again later.");
     }
   }
 
