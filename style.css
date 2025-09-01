@@ -88,7 +88,15 @@ nav a:hover {
   justify-content: center;
   text-align: center;
   /* Use the Ted Lasso inspired hero illustration as the header background */
-  background-image: url('hero-ted.png');
+  background-image: url('hero-ted.png'); /* base fallback */
+  background-image: image-set(
+    url('hero-ted.webp') type('image/webp'),
+    url('hero-ted.png') type('image/png')
+  );
+  background-image: -webkit-image-set(
+    url('hero-ted.webp') type('image/webp'),
+    url('hero-ted.png') type('image/png')
+  );
   background-size: cover;
   background-position: center;
   color: var(--text-color);
