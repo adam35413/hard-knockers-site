@@ -179,6 +179,18 @@ main {
   line-height: 1.4;
 }
 
+/* League basics list */
+.basics ul {
+  margin-left: 1.3rem;
+  list-style: disc;
+}
+
+.basics li {
+  margin-bottom: 0.8rem;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
 /* Standings table */
 .table-container {
   overflow-x: auto;
