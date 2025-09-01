@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Review Proposals · Hard Knockers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      integrity="sha512-tM7fDQTD2/JrRhR+5eGMhHqKX4fokXvI16gLngfV2Y6lRRK4cqaYgt6nJ7EGYMB55+w+ucbk2P4I+3e9a7N9ug=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%88%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <nav>
+      <div class="logo">Hard Knockers</div>
+      <ul>
+        <li><a href="index.html#league-basics">League Basics</a></li>
+        <li><a href="index.html#by-laws">By-Laws</a></li>
+        <li><a href="index.html#nfl-scores">NFL Scores</a></li>
+        <li><a href="index.html#proposals">Submit Proposal</a></li>
+      </ul>
+    </nav>
+
+    <main>
+      <section class="section">
+        <h2><i class="fa-solid fa-comments"></i> Review Proposals</h2>
+        <p class="hint">Proposals are tracked as GitHub Issues labeled <strong>proposal</strong>. Filter by status or open the full discussion on GitHub.</p>
+
+        <div class="proposal-filters">
+          <button data-filter="all" class="cta">All</button>
+          <button data-filter="open" class="cta">Open</button>
+          <button data-filter="accepted" class="cta">Accepted</button>
+          <button data-filter="rejected" class="cta">Rejected</button>
+        </div>
+
+        <div id="gh-proposals" class="proposal-list"></div>
+        <p id="gh-error" class="score-error" style="display:none"></p>
+      </section>
+    </main>
+
+    <script>
+      const owner = 'adam35413';
+      const repo = 'hard-knockers-site';
+      const api = `https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=100`;
+
+      function isProposal(issue) {
+        const labels = (issue.labels || []).map(l => (l.name || '').toLowerCase());
+        const title = (issue.title || '').toLowerCase();
+        const body = (issue.body || '').toLowerCase();
+        // Only consider plain issues (exclude PRs) and detect proposals by label or template cues.
+        const isIssue = !('pull_request' in issue);
+        const isLikelyProposal = labels.includes('proposal') || title.includes('rule proposal') || body.includes('rule proposal') || body.includes('## summary');
+        return isIssue && isLikelyProposal;
+      }
+
+      function render(items) {
+        const container = document.getElementById('gh-proposals');
+        container.innerHTML = '';
+        if (!items || items.length === 0) {
+          container.innerHTML = '<p class="hint">No proposals found yet.</p>';
+          return;
+        }
+        for (const issue of items) {
+          const el = document.createElement('div');
+          el.className = 'proposal-card';
+          const created = new Date(issue.created_at).toLocaleDateString();
+          // Classification:
+          // - accepted: explicit label
+          // - open: state=open
+          // - rejected: everything else closed (default when maintainers close without label)
+          const hasAccepted = (issue.labels || []).some(l => (l.name || '').toLowerCase() === 'accepted');
+          const hasRejected = (issue.labels || []).some(l => (l.name || '').toLowerCase() === 'rejected');
+          const status = hasAccepted ? 'accepted' : (issue.state === 'open' ? 'open' : (hasRejected ? 'rejected' : 'rejected'));
+          el.dataset.status = status;
+          const labels = (issue.labels || []).map(l => `<span class="badge">${l.name}</span>`).join(' ');
+          el.innerHTML = `
+            <h3>${issue.title}</h3>
+            <p class="muted">#${issue.number} • by ${issue.user.login} • ${created}</p>
+            <div class="status-line"><span class="status-badge status-${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></div>
+            <div class="labels">${labels}</div>
+            <p><a class="cta" href="${issue.html_url}" target="_blank" rel="noopener">View discussion</a></p>
+          `;
+          container.appendChild(el);
+        }
+      }
+
+      let currentFilter = 'open';
+
+      async function loadIssues() {
+        const err = document.getElementById('gh-error');
+        err.style.display = 'none';
+        try {
+          const res = await fetch(api, { cache: 'no-store' });
+          if (!res.ok) throw new Error('GitHub API error: ' + res.status);
+          const data = await res.json();
+          const proposals = data.filter(isProposal);
+          render(proposals);
+          applyFilter(currentFilter);
+        } catch (e) {
+          console.error(e);
+          err.textContent = 'Could not load proposals from GitHub right now. Please try again later.';
+          err.style.display = 'block';
+        }
+      }
+
+      function applyFilter(val) {
+        currentFilter = val;
+        const buttons = document.querySelectorAll('.proposal-filters [data-filter]');
+        buttons.forEach(b => b.classList.toggle('active', b.dataset.filter === val));
+        const cards = document.querySelectorAll('.proposal-card');
+        cards.forEach(card => {
+          const show = val === 'all' || card.dataset.status === val;
+          card.style.display = show ? '' : 'none';
+        });
+      }
+
+      function setupFilters() {
+        const buttons = document.querySelectorAll('.proposal-filters [data-filter]');
+        buttons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            applyFilter(btn.dataset.filter);
+          });
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        loadIssues();
+        setupFilters();
+        // Default view: Open
+        applyFilter('open');
+      });
+    </script>
+  </body>
+  </html>

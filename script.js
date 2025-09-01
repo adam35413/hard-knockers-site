@@ -146,24 +146,28 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProposals();
   }
 
-  // Load scores and any saved proposals
+  // Load scores and any saved proposals (if present on page)
   initScores();
-  loadProposals();
+  if (document.getElementById('proposals-list')) {
+    loadProposals();
+  }
 
   // Handle proposal submission
   const form = document.getElementById('proposal-form');
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const nameInput = document.getElementById('name');
-    const proposalInput = document.getElementById('proposal');
-    const name = nameInput.value.trim();
-    const proposalText = proposalInput.value.trim();
-    if (!name || !proposalText) return;
-    addProposal(name, proposalText);
-    // Clear the form
-    nameInput.value = '';
-    proposalInput.value = '';
-  });
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('name');
+      const proposalInput = document.getElementById('proposal');
+      const name = nameInput.value.trim();
+      const proposalText = proposalInput.value.trim();
+      if (!name || !proposalText) return;
+      addProposal(name, proposalText);
+      // Clear the form
+      nameInput.value = '';
+      proposalInput.value = '';
+    });
+  }
 
   // Set current year in footer
   document.getElementById('year').textContent = new Date().getFullYear();

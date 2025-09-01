@@ -37,6 +37,7 @@
         <li><a href="#by-laws">By-Laws</a></li>
         <li><a href="#nfl-scores">NFL Scores</a></li>
         <li><a href="#proposals">Propose a Rule</a></li>
+        <li><a href="proposals.html">Review Proposals</a></li>
       </ul>
     </nav>
 
@@ -93,20 +94,10 @@
       <!-- Proposals Section -->
       <section id="proposals" class="section proposals">
         <h2><i class="fa-solid fa-lightbulb"></i> Propose a Rule</h2>
-        <p>Have an idea to improve the league? Share your rule proposal below. Your fellow owners will be able to review and discuss suggestions.</p>
-        <form id="proposal-form">
-          <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" id="name" name="name" placeholder="Your Name" required />
-          </div>
-          <div class="form-group">
-            <label for="proposal">Proposal</label>
-            <textarea id="proposal" name="proposal" placeholder="Describe your rule change…" rows="4" required></textarea>
-          </div>
-          <button type="submit" class="cta">Submit Proposal</button>
-        </form>
-        <div id="proposals-list">
-          <!-- Suggestions will appear here -->
+        <p>We track proposals as GitHub Issues so everyone can discuss and vote. Use the buttons below to submit and review.</p>
+        <div class="proposal-actions">
+          <a class="cta" href="https://github.com/adam35413/hard-knockers-site/issues/new?labels=proposal&template=proposal.md&title=Rule%20Proposal%3A%20" target="_blank" rel="noopener">Submit on GitHub</a>
+          <a class="cta" href="proposals.html">Review Proposals</a>
         </div>
       </section>
     </main>
