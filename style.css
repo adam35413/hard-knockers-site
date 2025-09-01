@@ -89,17 +89,28 @@ nav a:hover {
   width: 40px;
   height: 40px;
   margin-left: auto;
-  align-items: center;
-  justify-content: center;
+  position: relative;
   cursor: pointer;
 }
 .nav-toggle .bar {
   display: block;
-  width: 22px;
+  width: 24px;
   height: 2px;
   background: var(--text-color);
-  margin: 3px 0;
+  margin: 5px auto;
   border-radius: 1px;
+  transition: transform 200ms ease, opacity 180ms ease;
+}
+
+/* Animate to an "X" when menu is open */
+nav.open .nav-toggle .bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+nav.open .nav-toggle .bar:nth-child(2) {
+  opacity: 0;
+}
+nav.open .nav-toggle .bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
 }
 
 /* Hero section */
@@ -465,7 +476,7 @@ footer {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .nav-toggle { display: inline-flex; }
+  .nav-toggle { display: inline-block; }
   nav { padding: 0.75rem 1rem; }
   nav .nav-links {
     display: none;

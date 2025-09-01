@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     navToggle.addEventListener('click', () => {
       const open = nav.classList.toggle('open');
       navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      navToggle.setAttribute('aria-label', open ? 'Close navigation' : 'Toggle navigation');
     });
     document.querySelectorAll('nav .nav-links a').forEach((a) =>
       a.addEventListener('click', () => {
