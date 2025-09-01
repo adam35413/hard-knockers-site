@@ -24,19 +24,30 @@ document.addEventListener('DOMContentLoaded', () => {
   if (subtitle) {
     let idx = 0;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const setQuote = () => {
-      subtitle.textContent = quotes[idx % quotes.length];
+    const advance = () => {
+      const next = quotes[idx % quotes.length];
       idx += 1;
+      if (reduceMotion) {
+        subtitle.textContent = next;
+        return;
+        }
+      // Fade out, swap text, fade in
+      subtitle.style.opacity = '0';
+      setTimeout(() => {
+        subtitle.textContent = next;
+        subtitle.style.opacity = '1';
+      }, 250);
     };
-    setQuote();
+    // Initial quote
+    advance();
     if (!reduceMotion) {
-      let timer = setInterval(setQuote, 5000);
+      let timer = setInterval(advance, 8000); // slower rotation
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           clearInterval(timer);
         } else {
-          setQuote();
-          timer = setInterval(setQuote, 5000);
+          advance();
+          timer = setInterval(advance, 8000);
         }
       });
     }
