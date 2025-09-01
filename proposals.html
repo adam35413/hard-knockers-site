@@ -58,7 +58,10 @@
         const labels = (issue.labels || []).map(l => (l.name || '').toLowerCase());
         const title = (issue.title || '').toLowerCase();
         const body = (issue.body || '').toLowerCase();
-        return labels.includes('proposal') || title.includes('rule proposal') || body.includes('rule proposal') || body.includes('## summary');
+        // Only consider plain issues (exclude PRs) and detect proposals by label or template cues.
+        const isIssue = !('pull_request' in issue);
+        const isLikelyProposal = labels.includes('proposal') || title.includes('rule proposal') || body.includes('rule proposal') || body.includes('## summary');
+        return isIssue && isLikelyProposal;
       }
 
       function render(items) {
@@ -72,7 +75,13 @@
           const el = document.createElement('div');
           el.className = 'proposal-card';
           const created = new Date(issue.created_at).toLocaleDateString();
-          const status = issue.state === 'open' ? 'open' : (issue.labels || []).some(l => l.name === 'accepted') ? 'accepted' : (issue.labels || []).some(l => l.name === 'rejected') ? 'rejected' : 'closed';
+          // Classification:
+          // - accepted: explicit label
+          // - open: state=open
+          // - rejected: everything else closed (default when maintainers close without label)
+          const hasAccepted = (issue.labels || []).some(l => (l.name || '').toLowerCase() === 'accepted');
+          const hasRejected = (issue.labels || []).some(l => (l.name || '').toLowerCase() === 'rejected');
+          const status = hasAccepted ? 'accepted' : (issue.state === 'open' ? 'open' : (hasRejected ? 'rejected' : 'rejected'));
           el.dataset.status = status;
           const labels = (issue.labels || []).map(l => `<span class="badge">${l.name}</span>`).join(' ');
           el.innerHTML = `
