@@ -116,11 +116,56 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   // Sample NFL scores used when the API is not available.
   const sampleScores = [
-    { away: 'Cowboys', awayScore: 21, home: 'Eagles', homeScore: 24 },
-    { away: 'Patriots', awayScore: 17, home: 'Dolphins', homeScore: 20 },
-    { away: 'Packers', awayScore: 27, home: 'Bears', homeScore: 23 },
-    { away: 'Giants', awayScore: 14, home: 'Commanders', homeScore: 18 },
-    { away: '49ers', awayScore: 30, home: 'Seahawks', homeScore: 28 }
+    {
+      away: { name: 'Dallas Cowboys', score: 21, abbreviation: 'DAL', logo: 'https://a.espncdn.com/i/teamlogos/nfl/500/dal.png' },
+      home: { name: 'Philadelphia Eagles', score: 24, abbreviation: 'PHI', logo: 'https://a.espncdn.com/i/teamlogos/nfl/500/phi.png' }
+    },
+    {
+      away: { name: 'New England Patriots', score: 17, abbreviation: 'NE', logo: 'https://a.espncdn.com/i/teamlogos/nfl/500/ne.png' },
+      home: { name: 'Miami Dolphins', score: 20, abbreviation: 'MIA', logo: 'https://a.espncdn.com/i/teamlogos/nfl/500/mia.png' }
+    },
+    {
+      away: { name: 'Green Bay Packers', score: 27, abbreviation: 'GB', logo: 'https://a.espncdn.com/i/teamlogos/nfl/500/gb.png' },
+      home: { name: 'Chicago Bears', score: 23, abbreviation: 'CHI', logo: 'https://a.espncdn.com/i/teamlogos/nfl/500/chi.png' }
+    },
+    {
+      away: { name: 'New York Giants', score: 14, abbreviation: 'NYG', logo: 'https://a.espncdn.com/i/teamlogos/nfl/500/nyg.png' },
+      home: { name: 'Washington Commanders', score: 18, abbreviation: 'WAS', logo: 'https://a.espncdn.com/i/teamlogos/nfl/500/wsh.png' }
+    },
+    {
+      away: { name: 'San Francisco 49ers', score: 30, abbreviation: 'SF', logo: 'https://a.espncdn.com/i/teamlogos/nfl/500/sf.png' },
+      home: { name: 'Seattle Seahawks', score: 28, abbreviation: 'SEA', logo: 'https://a.espncdn.com/i/teamlogos/nfl/500/sea.png' }
+    }
+  ];
+
+  const teamDivisions = {
+    // AFC East
+    BUF: 'AFC East', MIA: 'AFC East', NE: 'AFC East', NYJ: 'AFC East',
+    // AFC North
+    BAL: 'AFC North', CIN: 'AFC North', CLE: 'AFC North', PIT: 'AFC North',
+    // AFC South
+    HOU: 'AFC South', IND: 'AFC South', JAX: 'AFC South', JAC: 'AFC South', TEN: 'AFC South',
+    // AFC West
+    DEN: 'AFC West', KC: 'AFC West', LV: 'AFC West', LVR: 'AFC West', LAC: 'AFC West',
+    // NFC East
+    DAL: 'NFC East', NYG: 'NFC East', PHI: 'NFC East', WSH: 'NFC East', WAS: 'NFC East',
+    // NFC North
+    CHI: 'NFC North', DET: 'NFC North', GB: 'NFC North', MIN: 'NFC North',
+    // NFC South
+    ATL: 'NFC South', CAR: 'NFC South', NO: 'NFC South', NOR: 'NFC South', TB: 'NFC South',
+    // NFC West
+    ARI: 'NFC West', LAR: 'NFC West', LA: 'NFC West', SEA: 'NFC West', SF: 'NFC West'
+  };
+
+  const DIVISION_ORDER = [
+    'AFC East',
+    'AFC North',
+    'AFC South',
+    'AFC West',
+    'NFC East',
+    'NFC North',
+    'NFC South',
+    'NFC West'
   ];
 
   /**
@@ -132,22 +177,43 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchNflScores() {
     // ESPN's scoreboard often expects a single date; try today then walk back up to 7 days.
     const format = (d) => d.toISOString().slice(0, 10).replace(/-/g, '');
+    const pickLogo = (team) => team?.logo || team?.logos?.[0]?.href || '';
+    const pickAbbreviation = (team) =>
+      (team?.abbreviation || team?.altAbbreviation || team?.alternateAbbreviation || team?.abbrev || '').toUpperCase();
+
     const toScores = (events) =>
-      events.map((ev) => {
-        const comp = ev.competitions?.[0];
-        const home = comp?.competitors?.find((c) => c.homeAway === 'home');
-        const away = comp?.competitors?.find((c) => c.homeAway === 'away');
-        return (
-          home && away && {
-            home: home.team.displayName,
-            homeScore: home.score,
-            away: away.team.displayName,
-            awayScore: away.score
-          }
-        );
-      }).filter(Boolean);
+      events
+        .map((ev) => {
+          const comp = ev.competitions?.[0];
+          const status = comp?.status?.type;
+          const completed = status?.completed || status?.state === 'post';
+          if (!completed) return null;
+          const home = comp?.competitors?.find((c) => c.homeAway === 'home');
+          const away = comp?.competitors?.find((c) => c.homeAway === 'away');
+          if (!home || !away) return null;
+          const toSide = (entry) => {
+            const abbreviation = pickAbbreviation(entry.team) || (entry.team.shortDisplayName || '').toUpperCase();
+            return {
+              name: entry.team.displayName,
+              score: Number.isFinite(Number(entry.score)) ? Number(entry.score) : entry.score,
+              abbreviation,
+              logo: pickLogo(entry.team)
+            };
+          };
+          const startTime = new Date(comp?.date || ev.date || Date.now()).getTime();
+          return {
+            id: ev.id,
+            startTime,
+            home: toSide(home),
+            away: toSide(away)
+          };
+        })
+        .filter(Boolean);
 
     const today = new Date();
+    const collected = [];
+    const seenIds = new Set();
+
     for (let offset = 0; offset <= 7; offset++) {
       const d = new Date(today);
       d.setDate(today.getDate() - offset);
@@ -159,15 +225,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const events = json.events || [];
         if (events.length > 0) {
           const parsed = toScores(events);
-          if (parsed.length > 0) return parsed;
+          parsed.forEach((game) => {
+            if (!seenIds.has(game.id)) {
+              seenIds.add(game.id);
+              collected.push(game);
+            }
+          });
         }
       } catch (e) {
         // Try the next day back on network/CORS failure.
         continue;
       }
+      if (collected.length >= 16) break;
     }
     // No events found in the last week.
-    return [];
+    return collected.sort((a, b) => a.startTime - b.startTime);
   }
 
   /**
@@ -177,14 +249,101 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderScores(scoresArr) {
     const list = document.getElementById('scores-list');
     list.innerHTML = '';
+    const getDivision = (team) => {
+      if (!team) return null;
+      const abbr = (team.abbreviation || '').toUpperCase();
+      return teamDivisions[abbr] || null;
+    };
+
+    const createTeamEl = (team, opponentScore) => {
+      const container = document.createElement('div');
+      container.className = 'team';
+
+      if (team.logo) {
+        const img = document.createElement('img');
+        img.src = team.logo;
+        img.alt = `${team.name} helmet`;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.className = 'team-logo';
+        container.appendChild(img);
+      } else {
+        container.classList.add('team--no-logo');
+      }
+
+      const info = document.createElement('div');
+      info.className = 'team-info';
+
+      const name = document.createElement('span');
+      name.className = 'team-name';
+      name.textContent = team.name;
+      info.appendChild(name);
+
+      const score = document.createElement('span');
+      score.className = 'team-score';
+      const scoreValue = Number(team.score);
+      const opponentValue = Number(opponentScore);
+      score.textContent = Number.isFinite(scoreValue) ? scoreValue : team.score || '—';
+      if (Number.isFinite(scoreValue) && Number.isFinite(opponentValue) && scoreValue > opponentValue) {
+        score.classList.add('team-score--lead');
+      }
+      info.appendChild(score);
+
+      container.appendChild(info);
+      return container;
+    };
+
+    const buildCard = (game) => {
+      const card = document.createElement('article');
+      card.className = 'score-card';
+      const awayLabel = game.away?.score ?? '—';
+      const homeLabel = game.home?.score ?? '—';
+      card.setAttribute('aria-label', `${game.away.name} ${awayLabel}, ${game.home.name} ${homeLabel}`);
+
+      const awayEl = createTeamEl(game.away, game.home.score);
+      const divider = document.createElement('span');
+      divider.className = 'score-divider';
+      divider.textContent = 'at';
+      const homeEl = createTeamEl(game.home, game.away.score);
+
+      card.appendChild(awayEl);
+      card.appendChild(divider);
+      card.appendChild(homeEl);
+      return card;
+    };
+
+    const grouped = new Map();
     scoresArr.forEach((game) => {
-      const div = document.createElement('div');
-      div.classList.add('score-card');
-      div.innerHTML = `
-        <span class="team away">${game.away} <strong>${game.awayScore}</strong></span>
-        <span class="team home"><strong>${game.homeScore}</strong> ${game.home}</span>
-      `;
-      list.appendChild(div);
+      const division = getDivision(game.home) || getDivision(game.away) || 'Around the League';
+      if (!grouped.has(division)) {
+        grouped.set(division, []);
+      }
+      grouped.get(division).push(game);
+    });
+
+    const orderedDivisions = [
+      ...DIVISION_ORDER.filter((name) => grouped.has(name)),
+      ...Array.from(grouped.keys()).filter((name) => !DIVISION_ORDER.includes(name))
+    ];
+
+    orderedDivisions.forEach((division) => {
+      const games = grouped.get(division);
+      if (!games || games.length === 0) return;
+
+      const section = document.createElement('section');
+      section.className = 'division-group';
+
+      const title = document.createElement('h3');
+      title.className = 'division-title';
+      title.textContent = division;
+      section.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'division-grid';
+      games.forEach((game) => grid.appendChild(buildCard(game)));
+      section.appendChild(grid);
+
+      list.appendChild(section);
     });
   }
 
@@ -192,14 +351,21 @@ document.addEventListener('DOMContentLoaded', () => {
    * Show a fantasy-themed error notice in the scores area.
    * @param {string} message
    */
-  function showScoresError(message) {
+  function showScoresError(message, { append = false } = {}) {
     const list = document.getElementById('scores-list');
+    if (!append) {
+      list.innerHTML = '';
+    } else {
+      list.querySelectorAll('.score-error').forEach((el) => el.remove());
+    }
     const notice = document.createElement('div');
     notice.className = 'score-error';
     notice.textContent = message;
-    // Prepend so it appears above any fallback content
-    list.innerHTML = '';
-    list.appendChild(notice);
+    if (append && list.firstChild) {
+      list.insertBefore(notice, list.firstChild);
+    } else {
+      list.appendChild(notice);
+    }
   }
 
   /**
@@ -210,14 +376,22 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const scores = await fetchNflScores();
       if (!scores || scores.length === 0) {
-        console.warn('No recent ESPN scores found; showing message only.');
-        showScoresError("The live scoreboard got benched this week — try again soon.");
+        console.warn('No recent ESPN scores found; showing fallback scores.');
+        renderScores(sampleScores);
+        showScoresError(
+          'The live scoreboard got benched this week — showing last season classics instead.',
+          { append: true }
+        );
       } else {
         renderScores(scores);
       }
     } catch (err) {
       console.error('ESPN scores fetch failed:', err);
-      showScoresError("We couldn’t pick up the ESPN play-by-play — please try again later.");
+      renderScores(sampleScores);
+      showScoresError(
+        'We couldn’t pick up the ESPN play-by-play — showing placeholder scores.',
+        { append: true }
+      );
     }
   }
 
