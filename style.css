@@ -1108,6 +1108,17 @@ body.page main {
   background: var(--volt);
 }
 
+.mascot-option:disabled,
+.mascot-option.taken {
+  opacity: 0.22;
+  cursor: not-allowed;
+}
+
+.mascot-option.taken:hover {
+  background: transparent;
+  transform: none;
+}
+
 /* Draft board */
 .draft-actions {
   display: flex;
@@ -1217,93 +1228,88 @@ body.page main {
   color: var(--text);
 }
 
+/* Race-length control */
+.race-options {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.race-options input {
+  width: 74px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius);
+}
+
+.race-options input:focus {
+  outline: none;
+  border-color: var(--volt);
+  box-shadow: 0 0 0 3px var(--volt-glow);
+}
+
+/* Field viewport — a window the field scrolls through, right → left */
 .race-field {
   position: relative;
-  background:
-    linear-gradient(90deg, rgba(61, 123, 255, 0.1), transparent 30%),
-    var(--ink-2);
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--card-radius);
-  padding: 0.9rem clamp(0.7rem, 2vw, 1.1rem);
-  overflow: hidden;
+  background: var(--ink-2);
+}
+
+/* The world is wider than the viewport and pans under a following camera */
+.race-world {
+  position: relative;
+  padding: 12px 0;
+  will-change: transform;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 78px, rgba(255, 255, 255, 0.1) 78px 82px),
+    linear-gradient(180deg, #0f3826 0%, #0b2c1c 55%, #0a2417 100%);
 }
 
 .race-track {
-  display: grid;
-  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .lane {
-  display: grid;
-  grid-template-columns: clamp(80px, 20vw, 150px) 1fr 46px;
-  align-items: center;
-  gap: 0.7rem;
-  border-radius: 6px;
-  transition: background 0.3s ease;
-}
-
-.lane.winner {
-  background: linear-gradient(90deg, rgba(204, 255, 0, 0.1), transparent 70%);
-}
-
-.lane-name {
-  font-family: var(--font-mono);
-  font-size: 0.76rem;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.lane.done .lane-name {
-  color: var(--text);
-}
-
-.lane.winner .lane-name {
-  color: var(--volt);
-}
-
-.lane-strip {
   position: relative;
-  height: 40px;
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  background:
-    repeating-linear-gradient(90deg, transparent 0 26px, rgba(255, 255, 255, 0.08) 26px 28px),
-    linear-gradient(180deg, #0f3826, #0a2417);
-}
-
-/* Finish line */
-.lane-strip::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  width: 5px;
-  background: repeating-linear-gradient(180deg, #fff 0 4px, #0a0d12 4px 8px);
-  opacity: 0.85;
+  height: 52px;
 }
 
 .racer {
   position: absolute;
-  left: 4px;
   top: 50%;
+  left: 0;
   transform: translate(0, -50%);
   will-change: transform;
-  font-size: 1.9rem;
-  line-height: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  z-index: 1;
 }
 
 .racer-mascot {
   display: inline-block;
+  font-size: 2rem;
+  line-height: 1;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45));
   animation: racerBob 0.34s ease-in-out infinite;
 }
 
-.lane.done .racer-mascot {
+.racer.finished .racer-mascot {
   animation: none;
 }
 
@@ -1316,20 +1322,83 @@ body.page main {
 }
 
 @keyframes winnerHop {
-  50% { transform: translateY(-6px) scale(1.15); }
+  50% { transform: translateY(-6px) scale(1.18); }
 }
 
-.lane-place {
+.racer-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #eaf2ea;
+  background: rgba(10, 13, 18, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 1px 6px;
+  border-radius: 999px;
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lane.winner .racer-tag {
+  color: var(--ink);
+  background: var(--volt);
+  border-color: var(--volt);
+}
+
+.racer-place {
+  position: absolute;
+  top: -7px;
+  right: -11px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  color: var(--text);
   font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 0.8rem;
-  color: var(--muted);
+  font-size: 0.6rem;
+  line-height: 16px;
   text-align: center;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.2s ease, transform 0.2s var(--ease);
 }
 
-.lane.winner .lane-place {
-  color: var(--volt);
-  font-size: 1.1rem;
+.racer.finished .racer-place {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.lane.winner .racer-place {
+  background: var(--volt);
+  border-color: var(--volt);
+  color: var(--ink);
+  font-size: 0.72rem;
+}
+
+/* Finish line across the field, with an end-zone glow beyond it */
+.race-finish {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  z-index: 0;
+  background: repeating-linear-gradient(180deg, #fff 0 7px, #0a0d12 7px 14px);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.3);
+}
+
+.race-finish::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 7px;
+  width: 150px;
+  background: linear-gradient(90deg, rgba(204, 255, 0, 0.18), transparent);
 }
 
 .race-countdown {

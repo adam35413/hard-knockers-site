@@ -32,9 +32,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Race stage elements
   const stageEl = document.getElementById('race-stage');
   const trackEl = document.getElementById('race-track');
+  const worldEl = document.getElementById('race-world');
+  const finishEl = document.getElementById('race-finish');
   const statusEl = document.getElementById('race-status');
   const skipBtn = document.getElementById('skip-race');
   const countdownEl = document.getElementById('race-countdown');
+  const secondsInput = document.getElementById('race-seconds');
 
   if (seasonLabel) seasonLabel.textContent = `${season} Season`;
 
@@ -69,6 +72,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let racing = false;
   let raf = null;
   let timers = [];
+  let geo = null; // race geometry (set per race in buildLanes)
+
+  // ---- race length control (seconds) ----
+  const SECONDS_KEY = 'hkRaceSeconds';
+  const clampSeconds = (v) => Math.min(60, Math.max(3, Math.round(Number(v) || 8)));
+  if (secondsInput) {
+    const savedSeconds = Number(localStorage.getItem(SECONDS_KEY));
+    if (savedSeconds) secondsInput.value = String(clampSeconds(savedSeconds));
+    secondsInput.addEventListener('change', () => {
+      secondsInput.value = String(clampSeconds(secondsInput.value));
+      write(SECONDS_KEY, Number(secondsInput.value));
+    });
+  }
+  const raceSeconds = () => clampSeconds(secondsInput ? secondsInput.value : 8);
 
   // ---- crypto-backed Fisher–Yates shuffle (used for the actual draft order) ----
   const rand = (max) => {
@@ -244,55 +261,75 @@ document.addEventListener('DOMContentLoaded', () => {
     if (countdownEl) { countdownEl.textContent = ''; countdownEl.classList.remove('go'); }
   }
 
+  // Position of a racer (0..1 progress) along the world, in world pixels.
+  function worldXFor(p) {
+    return geo.startPad + p * geo.runLen;
+  }
+
   function buildLanes(finishOrder) {
     trackEl.innerHTML = '';
     const n = finishOrder.length;
-    const gap = Math.min(320, Math.max(160, 2400 / n));
-    const T0 = 5200;
+
+    // Finish times spread across the chosen race length: winner ~60% in, last at the end.
+    const durationMs = raceSeconds() * 1000;
+    const T0 = durationMs * 0.6;
+    const span = durationMs * 0.4;
+    const gap = n > 1 ? span / (n - 1) : 0;
 
     const racers = finishOrder.map((name, rank) => ({
       name,
       rank,
       mascot: mascotForName(name),
       finishTime: T0 + rank * gap,
-      amp: 0.12 + Math.random() * 0.22,
+      amp: 0.14 + Math.random() * 0.22,
       freq: 1 + Math.floor(Math.random() * 3),
       phase: Math.random() * Math.PI * 2,
+      progress: 0,
       placed: false
     }));
 
-    // Display lanes in a shuffled order so the top lane doesn't telegraph the winner.
+    // Geometry: a long field that scrolls right→left under a camera following the pack.
+    const field = document.querySelector('.race-field');
+    const W = field.clientWidth || 600;
+    const startPad = 40;
+    const finishZone = Math.min(150, Math.max(90, W * 0.15));
+    const runLen = Math.max(1200, W * 1.7);
+    const trackPx = startPad + runLen + finishZone;
+    geo = { W, startPad, runLen, finishZone, trackPx, finishX: startPad + runLen };
+
+    worldEl.style.width = `${trackPx}px`;
+    worldEl.style.transform = 'translateX(0px)';
+    finishEl.style.left = `${geo.finishX}px`;
+
+    // Display lanes shuffled so the top lane doesn't telegraph the winner.
     const displayOrder = shuffle(racers.map((_, i) => i));
     displayOrder.forEach((rankIdx) => {
       const r = racers[rankIdx];
       const lane = document.createElement('div');
       lane.className = 'lane';
 
-      const nameEl = document.createElement('div');
-      nameEl.className = 'lane-name';
-      nameEl.textContent = r.name;
-
-      const strip = document.createElement('div');
-      strip.className = 'lane-strip';
-
       const racer = document.createElement('div');
       racer.className = 'racer';
-      racer.style.transform = 'translate(0px, -50%)';
+      racer.style.transform = `translate(${worldXFor(0)}px, -50%)`;
+
+      const badge = document.createElement('span');
+      badge.className = 'racer-place';
+
       const mascot = document.createElement('span');
       mascot.className = 'racer-mascot';
       mascot.textContent = r.mascot;
-      racer.appendChild(mascot);
-      strip.appendChild(racer);
 
-      const place = document.createElement('div');
-      place.className = 'lane-place';
+      const tag = document.createElement('span');
+      tag.className = 'racer-tag';
+      tag.textContent = r.name;
 
-      lane.append(nameEl, strip, place);
+      racer.append(badge, mascot, tag);
+      lane.appendChild(racer);
       trackEl.appendChild(lane);
 
       r.lane = lane;
-      r.strip = strip;
       r.el = racer;
+      r.badge = badge;
     });
 
     return racers;
@@ -305,14 +342,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function placeRacer(r, place, atFinish) {
     r.placed = true;
-    if (atFinish) {
-      const maxX = Math.max(0, r.strip.clientWidth - (r.el.offsetWidth || 30) - 6);
-      r.el.style.transform = `translate(${maxX}px, -50%)`;
-    }
+    r.progress = 1;
+    if (atFinish) r.el.style.transform = `translate(${worldXFor(1)}px, -50%)`;
     r.el.classList.add('finished');
     r.lane.classList.add('done');
-    if (place === 1) r.lane.classList.add('winner');
-    r.lane.querySelector('.lane-place').textContent = place === 1 ? '🏆' : ordinal(place);
+    if (place === 1) {
+      r.lane.classList.add('winner');
+      r.badge.textContent = '🏆';
+    } else {
+      r.badge.textContent = ordinal(place);
+    }
     appendPick(r.name);
     announce(place, r.name);
   }
@@ -332,6 +371,8 @@ document.addEventListener('DOMContentLoaded', () => {
     racers.forEach((r) => {
       if (!r.placed) { placed += 1; placeRacer(r, placed, true); }
     });
+    // Snap the camera to the finish so the crossings are on screen.
+    if (geo) worldEl.style.transform = `translateX(${-(geo.trackPx - geo.W)}px)`;
     finishRace();
   }
 
@@ -342,16 +383,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const frame = (ts) => {
       if (startTs === null) startTs = ts;
       const t = ts - startTs;
-      let leader = null;
-      let leaderP = -1;
       let allDone = true;
+      let leader = null;
+      let leaderX = -Infinity;
 
       racers.forEach((r) => {
-        if (r.placed) return;
+        if (r.placed) {
+          const x = worldXFor(r.progress);
+          if (x > leaderX) { leaderX = x; leader = r; }
+          return;
+        }
         const base = Math.min(t / r.finishTime, 1);
         if (base >= 1) {
           placedCount += 1;
           placeRacer(r, placedCount, true);
+          if (worldXFor(1) > leaderX) { leaderX = worldXFor(1); leader = r; }
           return;
         }
         allDone = false;
@@ -359,12 +405,17 @@ document.addEventListener('DOMContentLoaded', () => {
         let p = base + wobble;
         if (p < 0) p = 0;
         if (p > 0.985) p = 0.985;
-        const maxX = Math.max(0, r.strip.clientWidth - (r.el.offsetWidth || 30) - 6);
-        r.el.style.transform = `translate(${p * maxX}px, -50%)`;
-        if (p > leaderP) { leaderP = p; leader = r; }
+        r.progress = p;
+        const x = worldXFor(p);
+        r.el.style.transform = `translate(${x}px, -50%)`;
+        if (x > leaderX) { leaderX = x; leader = r; }
       });
 
-      if (leader && placedCount < racers.length) {
+      // Camera follows the front-runner, clamped to the field ends.
+      const cam = Math.max(-(geo.trackPx - geo.W), Math.min(0, geo.W * 0.58 - leaderX));
+      worldEl.style.transform = `translateX(${cam}px)`;
+
+      if (leader && !leader.placed && placedCount < racers.length) {
         statusEl.textContent = `${leader.mascot} ${leader.name} out front…`;
       }
 
@@ -506,9 +557,13 @@ document.addEventListener('DOMContentLoaded', () => {
     opt.addEventListener('click', (e) => {
       e.stopPropagation();
       if (pickerIndex != null && members[pickerIndex]) {
-        members[pickerIndex].mascot = emoji;
-        persistLeague();
-        renderRoster();
+        // Don't allow a mascot already taken by another manager.
+        const taken = members.some((m, i) => i !== pickerIndex && m.mascot === emoji);
+        if (!taken) {
+          members[pickerIndex].mascot = emoji;
+          persistLeague();
+          renderRoster();
+        }
       }
       closeMascotPicker();
     });
@@ -538,9 +593,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (pickerIndex === index && !picker.hidden) { closeMascotPicker(); return; }
     pickerIndex = index;
     const current = members[index] && members[index].mascot;
+    const taken = new Set(members.filter((_, i) => i !== index).map((m) => m.mascot));
     picker.querySelectorAll('.mascot-option').forEach((opt) => {
+      const isTaken = taken.has(opt.textContent);
+      opt.disabled = isTaken;
+      opt.classList.toggle('taken', isTaken);
       opt.classList.toggle('selected', opt.textContent === current);
     });
+    picker.scrollTop = 0;
     positionPicker(anchor);
   }
 
@@ -556,7 +616,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') closeMascotPicker();
   });
   window.addEventListener('resize', closeMascotPicker);
-  window.addEventListener('scroll', closeMascotPicker, true);
+  window.addEventListener('scroll', (e) => {
+    if (picker.hidden) return;
+    if (picker.contains(e.target)) return; // scrolling inside the picker itself
+    closeMascotPicker();
+  }, true);
 
   renderRoster();
   renderBoardStatic();

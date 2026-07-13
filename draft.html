@@ -79,6 +79,12 @@
         </div>
         <p>Generate a random draft order from this year&rsquo;s league. Add at least two managers to enable it.</p>
 
+        <div class="race-options">
+          <label for="race-seconds">Race length</label>
+          <input id="race-seconds" type="number" min="3" max="60" step="1" value="8" inputmode="numeric" />
+          <span class="race-options-unit">seconds</span>
+        </div>
+
         <div class="draft-actions">
           <button id="generate-order" class="cta" disabled>Generate Draft Order</button>
           <button id="replay-race" class="cta cta--ghost" type="button" hidden>Watch the Race</button>
@@ -94,7 +100,10 @@
             <button id="skip-race" class="cta cta--ghost" type="button">Skip</button>
           </div>
           <div class="race-field">
-            <div id="race-track" class="race-track"></div>
+            <div id="race-world" class="race-world">
+              <div id="race-track" class="race-track"></div>
+              <div id="race-finish" class="race-finish" aria-hidden="true"></div>
+            </div>
             <div id="race-countdown" class="race-countdown" aria-hidden="true"></div>
           </div>
         </div>
