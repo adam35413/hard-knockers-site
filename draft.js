@@ -298,10 +298,14 @@ document.addEventListener('DOMContentLoaded', () => {
       rank,
       mascot: mascotForName(name),
       finishTime: T0 + rank * gap,
-      amp: 0.14 + Math.random() * 0.22,
-      freq: 1 + Math.floor(Math.random() * 3),
+      // Small, smooth deviation from a straight run to the finish. Amplitude is
+      // kept low enough that progress never ticks backward (no jerky reversals),
+      // while differing freq/phase makes the front-runners trade the lead.
+      amp: 0.11 + Math.random() * 0.05,
+      freq: 4 + Math.floor(Math.random() * 3),
       phase: Math.random() * Math.PI * 2,
       progress: 0,
+      trueX: 0,
       placed: false
     }));
 
@@ -409,33 +413,45 @@ document.addEventListener('DOMContentLoaded', () => {
       let leader = null;
       let leaderX = -Infinity;
 
+      // Pass 1: advance progress, detect finishes, find the front-runner.
       racers.forEach((r) => {
-        if (r.placed) {
-          const x = worldXFor(r.progress);
-          if (x > leaderX) { leaderX = x; leader = r; }
-          return;
+        if (!r.placed) {
+          const base = Math.min(t / r.finishTime, 1);
+          if (base >= 1) {
+            placedCount += 1;
+            placeRacer(r, placedCount, true);
+          } else {
+            allDone = false;
+            let wobble = r.amp * Math.sin(base * r.freq * Math.PI + r.phase) * base * (1 - base);
+            // The eventual winner runs the field from behind, guaranteeing the
+            // lead changes hands before it takes over near the finish.
+            if (r.rank === 0) wobble -= 0.14 * Math.sin(Math.PI * base);
+            let p = base + wobble;
+            if (p < 0) p = 0;
+            if (p > 0.985) p = 0.985;
+            r.progress = p;
+          }
         }
-        const base = Math.min(t / r.finishTime, 1);
-        if (base >= 1) {
-          placedCount += 1;
-          placeRacer(r, placedCount, true);
-          if (worldXFor(1) > leaderX) { leaderX = worldXFor(1); leader = r; }
-          return;
-        }
-        allDone = false;
-        const wobble = r.amp * Math.sin(base * r.freq * Math.PI + r.phase) * base * (1 - base);
-        let p = base + wobble;
-        if (p < 0) p = 0;
-        if (p > 0.985) p = 0.985;
-        r.progress = p;
-        const x = worldXFor(p);
-        r.el.style.transform = `translate(${x}px, -50%)`;
-        if (x > leaderX) { leaderX = x; leader = r; }
+        r.trueX = worldXFor(r.placed ? 1 : r.progress);
+        if (r.trueX > leaderX) { leaderX = r.trueX; leader = r; }
       });
 
-      // Camera follows the front-runner, clamped to the field ends.
+      // Camera follows the front-runner so the field scrolls beneath the pack.
       const cam = Math.max(-geo.maxScroll, Math.min(0, geo.W * 0.58 - leaderX));
       worldEl.style.transform = `translateX(${cam}px)`;
+
+      // Pass 2: keep the WHOLE pack framed. Each racer sits behind the leader by
+      // a saturating (tanh) amount, so no matter how large the real distance gap
+      // grows, trailing racers can't fall off the left edge.
+      const behindCap = geo.W * 0.5;
+      const minScreen = 6;
+      racers.forEach((r) => {
+        const deficit = Math.max(0, leaderX - r.trueX);
+        const compressed = behindCap * Math.tanh(deficit / behindCap);
+        let x = leaderX - compressed;
+        if (x + cam < minScreen) x = minScreen - cam; // safety clamp: stay on screen
+        r.el.style.transform = `translate(${x}px, -50%)`;
+      });
 
       if (leader && !leader.placed && placedCount < racers.length) {
         statusEl.textContent = `${leader.mascot} ${leader.name} out front…`;
