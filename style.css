@@ -281,7 +281,7 @@ nav.open .nav-toggle .bar:nth-child(3) {
   background-color: #081b12;
   background-image: url('field.svg');
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   color: #fff;
   isolation: isolate;
 }
@@ -1031,7 +1031,7 @@ footer {
 @media (max-width: 480px) {
   #hero {
     min-height: 92vh;
-    background-position: center 25%;
+    background-position: center top;
   }
 }
 
