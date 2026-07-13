@@ -1025,13 +1025,13 @@ body.page main {
 }
 
 .chip-mascot {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border: 0;
   border-radius: 50%;
   cursor: pointer;
   background: rgba(255, 255, 255, 0.06);
-  font-size: 1.05rem;
+  font-size: 1.4rem;
   line-height: 1;
   display: grid;
   place-items: center;
@@ -1071,7 +1071,9 @@ body.page main {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 2px;
-  max-width: 280px;
+  max-width: 340px;
+  max-height: 320px;
+  overflow-y: auto;
   padding: 6px;
   background: var(--surface-2);
   border: 1px solid var(--line-strong);
@@ -1084,13 +1086,13 @@ body.page main {
 }
 
 .mascot-option {
-  width: 38px;
-  height: 38px;
+  width: 46px;
+  height: 46px;
   border: 0;
   border-radius: 8px;
   cursor: pointer;
   background: transparent;
-  font-size: 1.3rem;
+  font-size: 1.7rem;
   line-height: 1;
   display: grid;
   place-items: center;
@@ -1265,7 +1267,7 @@ body.page main {
 
 .lane-strip {
   position: relative;
-  height: 32px;
+  height: 40px;
   border-radius: 6px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -1292,7 +1294,7 @@ body.page main {
   top: 50%;
   transform: translate(0, -50%);
   will-change: transform;
-  font-size: 1.35rem;
+  font-size: 1.9rem;
   line-height: 1;
 }
 
