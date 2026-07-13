@@ -1309,6 +1309,12 @@ body.page main {
   animation: racerBob 0.34s ease-in-out infinite;
 }
 
+/* Most emoji face left by default — flip so they run toward the finish (right) */
+.mascot-glyph {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
 .racer.finished .racer-mascot {
   animation: none;
 }

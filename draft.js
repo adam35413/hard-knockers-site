@@ -289,8 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Finish times spread across the chosen race length: winner ~60% in, last at the end.
     const durationMs = raceSeconds() * 1000;
-    const T0 = durationMs * 0.6;
-    const span = durationMs * 0.4;
+    const T0 = durationMs * 0.8;   // winner crosses at 80% of the clock
+    const span = durationMs * 0.2; // finishes packed into the final stretch so they stream across at pace
     const gap = n > 1 ? span / (n - 1) : 0;
 
     const racers = finishOrder.map((name, rank) => ({
@@ -342,7 +342,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const mascot = document.createElement('span');
       mascot.className = 'racer-mascot';
-      mascot.textContent = r.mascot;
+      const glyph = document.createElement('span');
+      glyph.className = 'mascot-glyph';
+      glyph.textContent = r.mascot;
+      mascot.appendChild(glyph);
 
       const tag = document.createElement('span');
       tag.className = 'racer-tag';
