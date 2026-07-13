@@ -7,6 +7,39 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Mark that JS is active so reveal styles engage (no-JS keeps content visible)
+  document.documentElement.classList.add('js');
+
+  // Solid nav background once scrolled past the hero threshold
+  const navEl = document.querySelector('nav');
+  if (navEl) {
+    const onScroll = () => navEl.classList.toggle('scrolled', window.scrollY > 40);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  // Scroll-triggered reveals for sections and cards
+  const revealEls = document.querySelectorAll('.reveal');
+  if (revealEls.length) {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced || !('IntersectionObserver' in window)) {
+      revealEls.forEach((el) => el.classList.add('in'));
+    } else {
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('in');
+              io.unobserve(entry.target);
+            }
+          });
+        },
+        { rootMargin: '0px 0px -10% 0px', threshold: 0.1 }
+      );
+      revealEls.forEach((el) => io.observe(el));
+    }
+  }
+
   // Rotating hero subtitle quotes
   const subtitle = document.getElementById('subtitle');
   async function loadQuotes() {
