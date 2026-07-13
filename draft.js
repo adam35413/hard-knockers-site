@@ -279,8 +279,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Position of a racer (0..1 progress) along the world, in world pixels.
+  // Progress runs a touch PAST the finish line so racers cross it and coast
+  // to rest in the end zone rather than stopping on the line.
   function worldXFor(p) {
-    return geo.startPad + p * geo.runLen;
+    return geo.startPad + p * (geo.runLen + geo.crossPast);
   }
 
   function buildLanes(finishOrder) {
@@ -317,10 +319,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const SPEED = 0.24; // world px per ms — the leader's pace, fixed across race lengths
     const startPad = 40;
     const finishZone = Math.min(150, Math.max(90, W * 0.15));
+    const crossPast = Math.round(finishZone * 0.5); // how far past the line they coast
     const runLen = Math.max(500, SPEED * T0); // longer race time => longer field
     const trackPx = startPad + runLen + finishZone;
     const maxScroll = Math.max(0, trackPx - W);
-    geo = { W, startPad, runLen, finishZone, trackPx, maxScroll, finishX: startPad + runLen };
+    geo = { W, startPad, runLen, finishZone, crossPast, trackPx, maxScroll, finishX: startPad + runLen };
 
     worldEl.style.width = `${trackPx}px`;
     worldEl.style.transform = 'translateX(0px)';
