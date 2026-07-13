@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Draft · Hard Knockers</title>
+    <meta name="theme-color" content="#0a0d12" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%88%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body class="page">
+    <!-- Navigation -->
+    <nav>
+      <div class="logo"><a href="index.html">Hard Knockers</a></div>
+      <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="index.html#league-basics">Stakes</a></li>
+        <li><a href="index.html#by-laws">By-Laws</a></li>
+        <li><a href="index.html#nfl-scores">Scores</a></li>
+        <li><a href="draft.html" aria-current="page">Draft</a></li>
+        <li><a href="proposals.html">Review</a></li>
+      </ul>
+    </nav>
+
+    <main>
+      <!-- Page header -->
+      <section class="section page-hero">
+        <span class="eyebrow">Draft HQ</span>
+        <h1 class="page-title">Draft Room</h1>
+        <p>Set this year&rsquo;s league and spin up a random draft order. Everything is saved to this browser.</p>
+      </section>
+
+      <!-- This Year's League -->
+      <section id="league-roster" class="section">
+        <div class="section-head reveal">
+          <span class="eyebrow" id="season-label">Season</span>
+          <h2>This Year&rsquo;s League</h2>
+        </div>
+        <p>Add every manager in the league. Names save automatically as you go.</p>
+
+        <form id="member-form" class="roster-form" autocomplete="off">
+          <input
+            id="member-name"
+            type="text"
+            name="member-name"
+            placeholder="Manager name"
+            maxlength="40"
+            aria-label="Manager name"
+            required
+          />
+          <button type="submit" class="cta">Add Manager</button>
+        </form>
+
+        <p class="roster-count"><span id="member-count">0</span> Managers</p>
+        <p id="roster-empty" class="roster-empty">No managers yet — add your league above to get started.</p>
+        <ul id="member-list" class="member-list"></ul>
+      </section>
+
+      <!-- Draft Order -->
+      <section id="draft-order" class="section">
+        <div class="section-head reveal">
+          <span class="eyebrow">On the Clock</span>
+          <h2>Draft Order</h2>
+        </div>
+        <p>Generate a random draft order from this year&rsquo;s league. Add at least two managers to enable it.</p>
+
+        <div class="draft-actions">
+          <button id="generate-order" class="cta" disabled>Generate Draft Order</button>
+          <button id="copy-order" class="cta cta--ghost" type="button" hidden>Copy</button>
+          <button id="clear-order" class="cta cta--ghost" type="button" hidden>Clear</button>
+        </div>
+
+        <p id="draft-meta" class="draft-meta"></p>
+        <p id="draft-empty" class="draft-empty">No draft order yet — set your roster, then hit generate.</p>
+        <ol id="draft-board" class="draft-board"></ol>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <p>&copy; <span id="year"></span> Hard Knockers Fantasy Football League. All rights reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="draft.js"></script>
+  </body>
+</html>
