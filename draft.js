@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusEl = document.getElementById('race-status');
   const skipBtn = document.getElementById('skip-race');
   const countdownEl = document.getElementById('race-countdown');
+  const resultsEl = document.getElementById('race-results');
   const secondsInput = document.getElementById('race-seconds');
 
   if (seasonLabel) seasonLabel.textContent = `${season} Season`;
@@ -155,6 +156,22 @@ document.addEventListener('DOMContentLoaded', () => {
     pickName.textContent = name;
     li.appendChild(pickName);
     boardEl.appendChild(li);
+  };
+
+  // Live order panel pinned to the right edge of the race field.
+  const appendResult = (place, name) => {
+    if (!resultsEl) return;
+    const li = document.createElement('li');
+    if (place === 1) li.className = 'winner';
+    const rp = document.createElement('span');
+    rp.className = 'rp';
+    rp.textContent = place === 1 ? '🏆' : place;
+    const nm = document.createElement('span');
+    nm.className = 'rn';
+    nm.textContent = name;
+    li.append(rp, nm);
+    resultsEl.appendChild(li);
+    resultsEl.scrollTop = resultsEl.scrollHeight;
   };
 
   const setMeta = () => {
@@ -289,13 +306,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
 
     // Geometry: a long field that scrolls right→left under a camera following the pack.
+    // Geometry: constant scroll speed, so the chosen time changes how FAR the
+    // field runs (and how long we scroll) — not how fast the mascots move.
     const field = document.querySelector('.race-field');
     const W = field.clientWidth || 600;
+    const SPEED = 0.24; // world px per ms — the leader's pace, fixed across race lengths
     const startPad = 40;
     const finishZone = Math.min(150, Math.max(90, W * 0.15));
-    const runLen = Math.max(1200, W * 1.7);
+    const runLen = Math.max(500, SPEED * T0); // longer race time => longer field
     const trackPx = startPad + runLen + finishZone;
-    geo = { W, startPad, runLen, finishZone, trackPx, finishX: startPad + runLen };
+    const maxScroll = Math.max(0, trackPx - W);
+    geo = { W, startPad, runLen, finishZone, trackPx, maxScroll, finishX: startPad + runLen };
 
     worldEl.style.width = `${trackPx}px`;
     worldEl.style.transform = 'translateX(0px)';
@@ -353,6 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
       r.badge.textContent = ordinal(place);
     }
     appendPick(r.name);
+    appendResult(place, r.name);
     announce(place, r.name);
   }
 
@@ -372,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!r.placed) { placed += 1; placeRacer(r, placed, true); }
     });
     // Snap the camera to the finish so the crossings are on screen.
-    if (geo) worldEl.style.transform = `translateX(${-(geo.trackPx - geo.W)}px)`;
+    if (geo) worldEl.style.transform = `translateX(${-geo.maxScroll}px)`;
     finishRace();
   }
 
@@ -412,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       // Camera follows the front-runner, clamped to the field ends.
-      const cam = Math.max(-(geo.trackPx - geo.W), Math.min(0, geo.W * 0.58 - leaderX));
+      const cam = Math.max(-geo.maxScroll, Math.min(0, geo.W * 0.58 - leaderX));
       worldEl.style.transform = `translateX(${cam}px)`;
 
       if (leader && !leader.placed && placedCount < racers.length) {
@@ -447,6 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
     racing = true;
     stopRace();
     clearBoard();
+    if (resultsEl) resultsEl.innerHTML = '';
     draftEmpty.hidden = true;
     showResultButtons(false);
     stageEl.hidden = false;

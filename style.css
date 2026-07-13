@@ -1401,6 +1401,66 @@ body.page main {
   background: linear-gradient(90deg, rgba(204, 255, 0, 0.18), transparent);
 }
 
+/* Live draft order, pinned to the right edge of the field */
+.race-results {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 132px;
+  max-width: 48%;
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+  background: rgba(10, 13, 18, 0.74);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+}
+
+.race-results:empty {
+  display: none;
+}
+
+.race-results li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  color: var(--text);
+}
+
+.race-results .rp {
+  min-width: 1.7em;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: right;
+}
+
+.race-results .rn {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.race-results li.winner {
+  background: var(--volt);
+  color: var(--ink);
+}
+
+.race-results li.winner .rp {
+  color: var(--ink);
+}
+
 .race-countdown {
   position: absolute;
   inset: 0;
