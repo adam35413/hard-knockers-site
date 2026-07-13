@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="turf" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0e3122"/>
+      <stop offset="0.5" stop-color="#0b2619"/>
+      <stop offset="1" stop-color="#081b12"/>
+    </linearGradient>
+    <linearGradient id="ezL" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#c9ff00" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#c9ff00" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ezR" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0" stop-color="#3d7bff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#3d7bff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Turf -->
+  <rect x="0" y="0" width="1600" height="900" fill="url(#turf)"/>
+
+  <!-- Mowing stripes (every 10 yards) -->
+  <g fill="#0f3826" fill-opacity="0.45">
+    <rect x="190" y="60" width="122" height="780"/>
+    <rect x="434" y="60" width="122" height="780"/>
+    <rect x="678" y="60" width="122" height="780"/>
+    <rect x="922" y="60" width="122" height="780"/>
+    <rect x="1166" y="60" width="122" height="780"/>
+  </g>
+
+  <!-- End zones -->
+  <rect x="68" y="60" width="122" height="780" fill="#06170e"/>
+  <rect x="1410" y="60" width="122" height="780" fill="#06170e"/>
+  <rect x="68" y="60" width="122" height="780" fill="url(#ezL)"/>
+  <rect x="1410" y="60" width="122" height="780" fill="url(#ezR)"/>
+
+  <!-- Field boundary + end lines -->
+  <rect x="68" y="60" width="1464" height="780" fill="none" stroke="#e8f0ea" stroke-opacity="0.5" stroke-width="3"/>
+
+  <!-- Yard lines every 5 yards -->
+  <g stroke="#e8f0ea" stroke-opacity="0.5" stroke-width="2">
+    <line x1="251" y1="60" x2="251" y2="840"/>
+    <line x1="312" y1="60" x2="312" y2="840"/>
+    <line x1="373" y1="60" x2="373" y2="840"/>
+    <line x1="434" y1="60" x2="434" y2="840"/>
+    <line x1="495" y1="60" x2="495" y2="840"/>
+    <line x1="556" y1="60" x2="556" y2="840"/>
+    <line x1="617" y1="60" x2="617" y2="840"/>
+    <line x1="678" y1="60" x2="678" y2="840"/>
+    <line x1="739" y1="60" x2="739" y2="840"/>
+    <line x1="861" y1="60" x2="861" y2="840"/>
+    <line x1="922" y1="60" x2="922" y2="840"/>
+    <line x1="983" y1="60" x2="983" y2="840"/>
+    <line x1="1044" y1="60" x2="1044" y2="840"/>
+    <line x1="1105" y1="60" x2="1105" y2="840"/>
+    <line x1="1166" y1="60" x2="1166" y2="840"/>
+    <line x1="1227" y1="60" x2="1227" y2="840"/>
+    <line x1="1288" y1="60" x2="1288" y2="840"/>
+    <line x1="1349" y1="60" x2="1349" y2="840"/>
+  </g>
+
+  <!-- Goal lines + 50 (emphasized) -->
+  <g stroke="#e8f0ea" stroke-opacity="0.85" stroke-width="3.5">
+    <line x1="190" y1="60" x2="190" y2="840"/>
+    <line x1="1410" y1="60" x2="1410" y2="840"/>
+    <line x1="800" y1="60" x2="800" y2="840"/>
+  </g>
+
+  <!-- Hash marks (two inner rows, one tick per yard) -->
+  <g stroke="#dfe9e2" stroke-opacity="0.4" stroke-width="2" stroke-dasharray="3 9.2">
+    <line x1="190" y1="332" x2="1410" y2="332"/>
+    <line x1="190" y1="568" x2="1410" y2="568"/>
+  </g>
+
+  <!-- Yard numbers -->
+  <g fill="#dfe9e2" fill-opacity="0.45" font-family="'Arial Narrow', Arial, sans-serif" font-weight="700" font-size="58" text-anchor="middle" letter-spacing="4">
+    <text x="312" y="212">10</text>
+    <text x="434" y="212">20</text>
+    <text x="556" y="212">30</text>
+    <text x="678" y="212">40</text>
+    <text x="800" y="212">50</text>
+    <text x="922" y="212">40</text>
+    <text x="1044" y="212">30</text>
+    <text x="1166" y="212">20</text>
+    <text x="1288" y="212">10</text>
+  </g>
+  <g fill="#dfe9e2" fill-opacity="0.45" font-family="'Arial Narrow', Arial, sans-serif" font-weight="700" font-size="58" text-anchor="middle" letter-spacing="4" transform="rotate(180 800 700)">
+    <text x="312" y="700">10</text>
+    <text x="434" y="700">20</text>
+    <text x="556" y="700">30</text>
+    <text x="678" y="700">40</text>
+    <text x="800" y="700">50</text>
+    <text x="922" y="700">40</text>
+    <text x="1044" y="700">30</text>
+    <text x="1166" y="700">20</text>
+    <text x="1288" y="700">10</text>
+  </g>
+
+  <!-- Midfield mark -->
+  <g transform="translate(800 450) rotate(45)">
+    <rect x="-22" y="-22" width="44" height="44" fill="none" stroke="#c9ff00" stroke-opacity="0.75" stroke-width="3"/>
+  </g>
+</svg>
