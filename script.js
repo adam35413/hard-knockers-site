@@ -6,9 +6,22 @@
  * client‑side to support static hosting environments (e.g. GitHub Pages or Netlify).
  */
 
+// Don't let the browser restore a prior scroll position on reload
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
 document.addEventListener('DOMContentLoaded', () => {
   // Mark that JS is active so reveal styles engage (no-JS keeps content visible)
   document.documentElement.classList.add('js');
+
+  // On a refresh, ignore any stale #hash (e.g. left by a "View By-Laws" click)
+  // and start at the top. A fresh visit with a shared anchor still works.
+  const navEntry = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+  const isReload = navEntry ? navEntry.type === 'reload' : (performance.navigation && performance.navigation.type === 1);
+  if (isReload && location.hash) {
+    history.replaceState(null, '', location.pathname + location.search);
+    window.scrollTo(0, 0);
+    requestAnimationFrame(() => window.scrollTo(0, 0));
+  }
 
   // Solid nav background once scrolled past the hero threshold
   const navEl = document.querySelector('nav');
