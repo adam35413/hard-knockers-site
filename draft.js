@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const storedLeague = read(LEAGUE_KEY);
-  let members = storedLeague && Array.isArray(storedLeague.members) ? storedLeague.members.slice() : [];
+  let members = [];
   let order = read(ORDER_KEY);
   let racing = false;
   let raf = null;
@@ -80,6 +80,32 @@ document.addEventListener('DOMContentLoaded', () => {
     for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
     return MASCOTS[h % MASCOTS.length];
   };
+
+  // Members are stored as { name, mascot }. Migrate older string-only rosters.
+  const migrateMembers = (raw) => {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((m) => (typeof m === 'string' ? { name: m, mascot: mascotFor(m) } : m))
+      .filter((m) => m && m.name)
+      .map((m) => ({ name: m.name, mascot: m.mascot || mascotFor(m.name) }));
+  };
+
+  const usedMascots = () => new Set(members.map((m) => m.mascot));
+
+  // Prefer the name's hashed mascot; if taken, grab the first unused one.
+  const pickMascot = (name) => {
+    const used = usedMascots();
+    const preferred = mascotFor(name);
+    if (!used.has(preferred)) return preferred;
+    return MASCOTS.find((m) => !used.has(m)) || preferred;
+  };
+
+  const mascotForName = (name) => {
+    const m = members.find((x) => x.name === name);
+    return (m && m.mascot) || mascotFor(name);
+  };
+
+  members = migrateMembers(storedLeague && storedLeague.members);
 
   const ordinal = (n) => {
     const s = ['th', 'st', 'nd', 'rd'];
@@ -152,20 +178,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ---- roster editing ----
   const renderRoster = () => {
+    closeMascotPicker();
     listEl.innerHTML = '';
     countEl.textContent = String(members.length);
     rosterEmpty.hidden = members.length > 0;
 
-    members.forEach((name, index) => {
+    members.forEach((member, index) => {
       const li = document.createElement('li');
       li.className = 'member-chip';
 
+      const mascotBtn = document.createElement('button');
+      mascotBtn.type = 'button';
+      mascotBtn.className = 'chip-mascot';
+      mascotBtn.textContent = member.mascot;
+      mascotBtn.title = 'Change mascot';
+      mascotBtn.setAttribute('aria-label', `Change ${member.name}'s mascot`);
+      mascotBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openMascotPicker(index, mascotBtn);
+      });
+
       const label = document.createElement('span');
-      label.textContent = name;
+      label.className = 'chip-name';
+      label.textContent = member.name;
 
       const remove = document.createElement('button');
       remove.type = 'button';
-      remove.setAttribute('aria-label', `Remove ${name}`);
+      remove.className = 'chip-remove';
+      remove.setAttribute('aria-label', `Remove ${member.name}`);
       remove.textContent = '×';
       remove.addEventListener('click', () => {
         if (racing) return;
@@ -176,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         syncGenerateState();
       });
 
-      li.append(label, remove);
+      li.append(mascotBtn, label, remove);
       listEl.appendChild(li);
     });
   };
@@ -202,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const racers = finishOrder.map((name, rank) => ({
       name,
       rank,
-      mascot: mascotFor(name),
+      mascot: mascotForName(name),
       finishTime: T0 + rank * gap,
       amp: 0.12 + Math.random() * 0.22,
       freq: 1 + Math.floor(Math.random() * 3),
@@ -377,11 +417,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (racing) return;
     const name = nameInput.value.trim();
     if (!name) return;
-    if (members.some((m) => m.toLowerCase() === name.toLowerCase())) {
+    if (members.some((m) => m.name.toLowerCase() === name.toLowerCase())) {
       nameInput.value = '';
       return; // no duplicates
     }
-    members.push(name);
+    members.push({ name, mascot: pickMascot(name) });
     persistLeague();
     invalidateOrder();
     renderRoster();
@@ -392,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   generateBtn.addEventListener('click', () => {
     if (racing || members.length < 2) return;
-    order = { season, generatedAt: new Date().toISOString(), order: shuffle(members) };
+    order = { season, generatedAt: new Date().toISOString(), order: shuffle(members.map((m) => m.name)) };
     write(ORDER_KEY, order);
     syncGenerateState();
     startRace(order.order);
@@ -430,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Drop a stored order that no longer matches the current roster (safety on load).
   if (hasOrder()) {
-    const current = new Set(members.map((m) => m.toLowerCase()));
+    const current = new Set(members.map((m) => m.name.toLowerCase()));
     const sameSize = order.order.length === members.length;
     const sameNames = order.order.every((n) => current.has(n.toLowerCase()));
     if (!sameSize || !sameNames) {
@@ -438,6 +478,74 @@ document.addEventListener('DOMContentLoaded', () => {
       drop(ORDER_KEY);
     }
   }
+
+  // ---- mascot picker popover ----
+  let pickerIndex = null;
+  const picker = document.createElement('div');
+  picker.className = 'mascot-picker';
+  picker.hidden = true;
+  picker.setAttribute('role', 'listbox');
+  picker.setAttribute('aria-label', 'Choose a mascot');
+  MASCOTS.forEach((emoji) => {
+    const opt = document.createElement('button');
+    opt.type = 'button';
+    opt.className = 'mascot-option';
+    opt.textContent = emoji;
+    opt.setAttribute('role', 'option');
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (pickerIndex != null && members[pickerIndex]) {
+        members[pickerIndex].mascot = emoji;
+        persistLeague();
+        renderRoster();
+      }
+      closeMascotPicker();
+    });
+    picker.appendChild(opt);
+  });
+  document.body.appendChild(picker);
+
+  function positionPicker(anchor) {
+    const rect = anchor.getBoundingClientRect();
+    picker.style.visibility = 'hidden';
+    picker.hidden = false;
+    const pw = picker.offsetWidth;
+    const ph = picker.offsetHeight;
+    const vw = document.documentElement.clientWidth;
+    let left = Math.min(window.scrollX + rect.left, window.scrollX + vw - pw - 8);
+    left = Math.max(left, window.scrollX + 8);
+    let top = window.scrollY + rect.bottom + 8;
+    if (rect.bottom + 8 + ph > window.innerHeight && rect.top - 8 - ph > 0) {
+      top = window.scrollY + rect.top - ph - 8; // flip above when tight on space
+    }
+    picker.style.left = `${left}px`;
+    picker.style.top = `${top}px`;
+    picker.style.visibility = '';
+  }
+
+  function openMascotPicker(index, anchor) {
+    if (pickerIndex === index && !picker.hidden) { closeMascotPicker(); return; }
+    pickerIndex = index;
+    const current = members[index] && members[index].mascot;
+    picker.querySelectorAll('.mascot-option').forEach((opt) => {
+      opt.classList.toggle('selected', opt.textContent === current);
+    });
+    positionPicker(anchor);
+  }
+
+  function closeMascotPicker() {
+    picker.hidden = true;
+    pickerIndex = null;
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!picker.hidden && !picker.contains(e.target)) closeMascotPicker();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMascotPicker();
+  });
+  window.addEventListener('resize', closeMascotPicker);
+  window.addEventListener('scroll', closeMascotPicker, true);
 
   renderRoster();
   renderBoardStatic();

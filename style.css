@@ -1010,17 +1010,41 @@ body.page main {
 .member-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.55rem;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 0.5rem 0.55rem 0.5rem 1rem;
+  padding: 0.35rem 0.55rem;
   font-family: var(--font-mono);
   font-size: 0.85rem;
   color: var(--text);
 }
 
-.member-chip button {
+.chip-name {
+  padding-inline: 0.1rem 0.15rem;
+}
+
+.chip-mascot {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 1.05rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.chip-mascot:hover {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 2px var(--volt-glow);
+  transform: translateY(-1px);
+}
+
+.chip-remove {
   width: 22px;
   height: 22px;
   border: 0;
@@ -1035,9 +1059,51 @@ body.page main {
   transition: background 0.2s ease, color 0.2s ease;
 }
 
-.member-chip button:hover {
+.chip-remove:hover {
   background: var(--loss);
   color: #fff;
+}
+
+/* Mascot picker popover */
+.mascot-picker {
+  position: absolute;
+  z-index: 300;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+  max-width: 280px;
+  padding: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+}
+
+.mascot-picker[hidden] {
+  display: none;
+}
+
+.mascot-option {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  font-size: 1.3rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.mascot-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.mascot-option.selected {
+  background: var(--volt);
 }
 
 /* Draft board */
