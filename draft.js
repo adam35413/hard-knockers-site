@@ -1,7 +1,8 @@
 /*
  * Draft page logic
  *
- * Manages this year's league roster and generates a random draft order.
+ * Manages this year's league roster, generates a random draft order, and plays
+ * a dramatic "field dash" race whose finishing order IS the draft order.
  * All data is client-side (localStorage) to fit static hosting:
  *   hkLeague     -> { season, members: [names] }
  *   hkDraftOrder -> { season, generatedAt, order: [names] }
@@ -21,13 +22,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const countEl = document.getElementById('member-count');
   const seasonLabel = document.getElementById('season-label');
   const generateBtn = document.getElementById('generate-order');
+  const replayBtn = document.getElementById('replay-race');
   const copyBtn = document.getElementById('copy-order');
   const clearBtn = document.getElementById('clear-order');
   const boardEl = document.getElementById('draft-board');
   const draftEmpty = document.getElementById('draft-empty');
   const metaEl = document.getElementById('draft-meta');
 
+  // Race stage elements
+  const stageEl = document.getElementById('race-stage');
+  const trackEl = document.getElementById('race-track');
+  const statusEl = document.getElementById('race-status');
+  const skipBtn = document.getElementById('skip-race');
+  const countdownEl = document.getElementById('race-countdown');
+
   if (seasonLabel) seasonLabel.textContent = `${season} Season`;
+
+  const MASCOTS = ['🦆', '🐎', '🐢', '🐇', '🦁', '🐅', '🐐', '🦅', '🐝', '🦈', '🐊', '🦖', '🐏', '🐆', '🦌', '🐗', '🐕', '🐈'];
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // ---- storage helpers ----
   const read = (key) => {
@@ -43,8 +55,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const storedLeague = read(LEAGUE_KEY);
   let members = storedLeague && Array.isArray(storedLeague.members) ? storedLeague.members.slice() : [];
   let order = read(ORDER_KEY);
+  let racing = false;
+  let raf = null;
+  let timers = [];
 
-  // ---- crypto-backed Fisher–Yates shuffle ----
+  // ---- crypto-backed Fisher–Yates shuffle (used for the actual draft order) ----
   const rand = (max) => {
     const a = new Uint32Array(1);
     if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a);
@@ -60,25 +75,82 @@ document.addEventListener('DOMContentLoaded', () => {
     return s;
   };
 
-  const persistLeague = () => write(LEAGUE_KEY, { season, members });
+  const mascotFor = (name) => {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return MASCOTS[h % MASCOTS.length];
+  };
 
+  const ordinal = (n) => {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
+  const persistLeague = () => write(LEAGUE_KEY, { season, members });
   const hasOrder = () => !!(order && Array.isArray(order.order) && order.order.length);
 
-  // Roster changed: a previously generated order is now stale, so drop it.
+  // ---- board rendering ----
+  const clearBoard = () => { boardEl.innerHTML = ''; };
+
+  const appendPick = (name) => {
+    const li = document.createElement('li');
+    li.className = 'draft-pick';
+    const pickName = document.createElement('span');
+    pickName.className = 'pick-name';
+    pickName.textContent = name;
+    li.appendChild(pickName);
+    boardEl.appendChild(li);
+  };
+
+  const setMeta = () => {
+    if (!hasOrder()) { metaEl.textContent = ''; return; }
+    let stamp = '';
+    if (order.generatedAt) {
+      const when = new Date(order.generatedAt);
+      if (!Number.isNaN(when.getTime())) {
+        stamp = ` · generated ${when.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      }
+    }
+    metaEl.textContent = `${order.season || season} draft · ${order.order.length} managers${stamp}`;
+  };
+
+  const showResultButtons = (show) => {
+    copyBtn.hidden = !show;
+    clearBtn.hidden = !show;
+    replayBtn.hidden = !show;
+  };
+
+  const renderBoardStatic = () => {
+    clearBoard();
+    if (!hasOrder()) { showResultButtons(false); setMeta(); draftEmpty.hidden = false; return; }
+    order.order.forEach(appendPick);
+    setMeta();
+    showResultButtons(true);
+    draftEmpty.hidden = true;
+  };
+
+  const syncGenerateState = () => {
+    generateBtn.disabled = racing || members.length < 2;
+    replayBtn.disabled = racing;
+    generateBtn.textContent = hasOrder() ? 'Regenerate Draft Order' : 'Generate Draft Order';
+  };
+
+  // Roster changed: any previously generated order (and its race) is now stale.
   const invalidateOrder = () => {
     if (order) {
       order = null;
       drop(ORDER_KEY);
-      renderOrder();
+      stopRace();
+      stageEl.hidden = true;
+      clearBoard();
+      showResultButtons(false);
+      setMeta();
+      draftEmpty.hidden = false;
     }
   };
 
-  const syncGenerateState = () => {
-    generateBtn.disabled = members.length < 2;
-    generateBtn.textContent = hasOrder() ? 'Regenerate Draft Order' : 'Generate Draft Order';
-  };
-
-  // ---- rendering ----
+  // ---- roster editing ----
   const renderRoster = () => {
     listEl.innerHTML = '';
     countEl.textContent = String(members.length);
@@ -96,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
       remove.setAttribute('aria-label', `Remove ${name}`);
       remove.textContent = '×';
       remove.addEventListener('click', () => {
+        if (racing) return;
         members.splice(index, 1);
         persistLeague();
         invalidateOrder();
@@ -108,41 +181,200 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  const renderOrder = () => {
-    boardEl.innerHTML = '';
-    const showOrder = hasOrder();
-    draftEmpty.hidden = showOrder;
-    copyBtn.hidden = !showOrder;
-    clearBtn.hidden = !showOrder;
+  // ---- race engine -------------------------------------------------------
+  // finishOrder[0] is the winner (1st overall pick). Each racer is given a
+  // strictly increasing finish time by rank, plus a cosmetic "wobble" that is
+  // exactly zero at its own finish moment — so mid-race positions swap wildly
+  // but the crossing order always equals the draft order.
+  function stopRace() {
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    timers.forEach(clearTimeout);
+    timers = [];
+    if (countdownEl) { countdownEl.textContent = ''; countdownEl.classList.remove('go'); }
+  }
 
-    if (!showOrder) {
-      metaEl.textContent = '';
+  function buildLanes(finishOrder) {
+    trackEl.innerHTML = '';
+    const n = finishOrder.length;
+    const gap = Math.min(320, Math.max(160, 2400 / n));
+    const T0 = 5200;
+
+    const racers = finishOrder.map((name, rank) => ({
+      name,
+      rank,
+      mascot: mascotFor(name),
+      finishTime: T0 + rank * gap,
+      amp: 0.12 + Math.random() * 0.22,
+      freq: 1 + Math.floor(Math.random() * 3),
+      phase: Math.random() * Math.PI * 2,
+      placed: false
+    }));
+
+    // Display lanes in a shuffled order so the top lane doesn't telegraph the winner.
+    const displayOrder = shuffle(racers.map((_, i) => i));
+    displayOrder.forEach((rankIdx) => {
+      const r = racers[rankIdx];
+      const lane = document.createElement('div');
+      lane.className = 'lane';
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'lane-name';
+      nameEl.textContent = r.name;
+
+      const strip = document.createElement('div');
+      strip.className = 'lane-strip';
+
+      const racer = document.createElement('div');
+      racer.className = 'racer';
+      racer.style.transform = 'translate(0px, -50%)';
+      const mascot = document.createElement('span');
+      mascot.className = 'racer-mascot';
+      mascot.textContent = r.mascot;
+      racer.appendChild(mascot);
+      strip.appendChild(racer);
+
+      const place = document.createElement('div');
+      place.className = 'lane-place';
+
+      lane.append(nameEl, strip, place);
+      trackEl.appendChild(lane);
+
+      r.lane = lane;
+      r.strip = strip;
+      r.el = racer;
+    });
+
+    return racers;
+  }
+
+  function announce(place, name) {
+    if (place === 1) statusEl.textContent = `🏆 1st overall pick — ${name}!`;
+    else statusEl.textContent = `${ordinal(place)} pick — ${name}`;
+  }
+
+  function placeRacer(r, place, atFinish) {
+    r.placed = true;
+    if (atFinish) {
+      const maxX = Math.max(0, r.strip.clientWidth - (r.el.offsetWidth || 30) - 6);
+      r.el.style.transform = `translate(${maxX}px, -50%)`;
+    }
+    r.el.classList.add('finished');
+    r.lane.classList.add('done');
+    if (place === 1) r.lane.classList.add('winner');
+    r.lane.querySelector('.lane-place').textContent = place === 1 ? '🏆' : ordinal(place);
+    appendPick(r.name);
+    announce(place, r.name);
+  }
+
+  function finishRace() {
+    racing = false;
+    stopRace();
+    statusEl.textContent = "That's your draft order!";
+    setMeta();
+    showResultButtons(true);
+    syncGenerateState();
+  }
+
+  function finishRemaining(racers) {
+    // Place any not-yet-finished racers immediately, in rank order.
+    let placed = racers.filter((r) => r.placed).length;
+    racers.forEach((r) => {
+      if (!r.placed) { placed += 1; placeRacer(r, placed, true); }
+    });
+    finishRace();
+  }
+
+  function animate(racers) {
+    let startTs = null;
+    let placedCount = racers.filter((r) => r.placed).length;
+
+    const frame = (ts) => {
+      if (startTs === null) startTs = ts;
+      const t = ts - startTs;
+      let leader = null;
+      let leaderP = -1;
+      let allDone = true;
+
+      racers.forEach((r) => {
+        if (r.placed) return;
+        const base = Math.min(t / r.finishTime, 1);
+        if (base >= 1) {
+          placedCount += 1;
+          placeRacer(r, placedCount, true);
+          return;
+        }
+        allDone = false;
+        const wobble = r.amp * Math.sin(base * r.freq * Math.PI + r.phase) * base * (1 - base);
+        let p = base + wobble;
+        if (p < 0) p = 0;
+        if (p > 0.985) p = 0.985;
+        const maxX = Math.max(0, r.strip.clientWidth - (r.el.offsetWidth || 30) - 6);
+        r.el.style.transform = `translate(${p * maxX}px, -50%)`;
+        if (p > leaderP) { leaderP = p; leader = r; }
+      });
+
+      if (leader && placedCount < racers.length) {
+        statusEl.textContent = `${leader.mascot} ${leader.name} out front…`;
+      }
+
+      if (allDone) { finishRace(); return; }
+      raf = requestAnimationFrame(frame);
+    };
+
+    raf = requestAnimationFrame(frame);
+  }
+
+  function runCountdown(done) {
+    const steps = ['3', '2', '1', 'HIKE!'];
+    statusEl.textContent = 'On the line…';
+    let i = 0;
+    const tick = () => {
+      if (i >= steps.length) { countdownEl.textContent = ''; countdownEl.classList.remove('go'); done(); return; }
+      countdownEl.textContent = steps[i];
+      countdownEl.classList.remove('go');
+      void countdownEl.offsetWidth; // reflow to retrigger the pop animation
+      countdownEl.classList.add('go');
+      i += 1;
+      timers.push(setTimeout(tick, 650));
+    };
+    tick();
+  }
+
+  function startRace(finishOrder) {
+    if (racing) return;
+    racing = true;
+    stopRace();
+    clearBoard();
+    draftEmpty.hidden = true;
+    showResultButtons(false);
+    stageEl.hidden = false;
+    syncGenerateState();
+
+    const racers = buildLanes(finishOrder);
+
+    if (prefersReduced) {
+      statusEl.textContent = 'Draft order set.';
+      finishRemaining(racers);
       return;
     }
 
-    order.order.forEach((name) => {
-      const li = document.createElement('li');
-      li.className = 'draft-pick';
-      const pickName = document.createElement('span');
-      pickName.className = 'pick-name';
-      pickName.textContent = name;
-      li.appendChild(pickName);
-      boardEl.appendChild(li);
-    });
+    stageEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-    let stamp = '';
-    if (order.generatedAt) {
-      const when = new Date(order.generatedAt);
-      if (!Number.isNaN(when.getTime())) {
-        stamp = ` · generated ${when.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
-      }
-    }
-    metaEl.textContent = `${order.season || season} draft · ${order.order.length} managers${stamp}`;
-  };
+    // Skip jumps straight to the final board.
+    skipBtn.onclick = () => {
+      if (!racing) return;
+      stopRace();
+      statusEl.textContent = 'Skipped to the results.';
+      finishRemaining(racers);
+    };
+
+    runCountdown(() => animate(racers));
+  }
 
   // ---- events ----
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+    if (racing) return;
     const name = nameInput.value.trim();
     if (!name) return;
     if (members.some((m) => m.toLowerCase() === name.toLowerCase())) {
@@ -159,18 +391,28 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   generateBtn.addEventListener('click', () => {
-    if (members.length < 2) return;
+    if (racing || members.length < 2) return;
     order = { season, generatedAt: new Date().toISOString(), order: shuffle(members) };
     write(ORDER_KEY, order);
-    renderOrder();
     syncGenerateState();
-    boardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    startRace(order.order);
+  });
+
+  replayBtn.addEventListener('click', () => {
+    if (racing || !hasOrder()) return;
+    startRace(order.order);
   });
 
   clearBtn.addEventListener('click', () => {
     order = null;
     drop(ORDER_KEY);
-    renderOrder();
+    stopRace();
+    racing = false;
+    stageEl.hidden = true;
+    clearBoard();
+    showResultButtons(false);
+    setMeta();
+    draftEmpty.hidden = false;
     syncGenerateState();
   });
 
@@ -198,6 +440,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   renderRoster();
-  renderOrder();
+  renderBoardStatic();
   syncGenerateState();
 });

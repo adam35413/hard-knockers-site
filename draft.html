@@ -81,11 +81,24 @@
 
         <div class="draft-actions">
           <button id="generate-order" class="cta" disabled>Generate Draft Order</button>
+          <button id="replay-race" class="cta cta--ghost" type="button" hidden>Watch the Race</button>
           <button id="copy-order" class="cta cta--ghost" type="button" hidden>Copy</button>
           <button id="clear-order" class="cta cta--ghost" type="button" hidden>Clear</button>
         </div>
 
         <p id="draft-meta" class="draft-meta"></p>
+
+        <div id="race-stage" class="race-stage" hidden>
+          <div class="race-scoreboard">
+            <span class="race-status" id="race-status" role="status" aria-live="polite">Get ready…</span>
+            <button id="skip-race" class="cta cta--ghost" type="button">Skip</button>
+          </div>
+          <div class="race-field">
+            <div id="race-track" class="race-track"></div>
+            <div id="race-countdown" class="race-countdown" aria-hidden="true"></div>
+          </div>
+        </div>
+
         <p id="draft-empty" class="draft-empty">No draft order yet — set your roster, then hit generate.</p>
         <ol id="draft-board" class="draft-board"></ol>
       </section>
