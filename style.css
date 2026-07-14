@@ -923,6 +923,588 @@ main {
 }
 
 /* ------------------------------------------------------------------ */
+/* Interior pages (no hero) + Draft tool                               */
+/* ------------------------------------------------------------------ */
+body.page main {
+  padding-top: var(--nav-h);
+}
+
+.page-hero {
+  padding-bottom: 1rem;
+}
+
+.page-hero .eyebrow {
+  margin-bottom: 1rem;
+}
+
+.page-title {
+  font-size: clamp(3rem, 9vw, 6rem);
+  line-height: 0.9;
+  margin-bottom: 1rem;
+}
+
+/* Roster editor */
+.roster-form {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.2rem;
+}
+
+.roster-form input {
+  flex: 1 1 260px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.roster-form input::placeholder {
+  color: var(--muted);
+}
+
+.roster-form input:focus {
+  outline: none;
+  border-color: var(--volt);
+  box-shadow: 0 0 0 3px var(--volt-glow);
+}
+
+.roster-count {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+.roster-count span {
+  color: var(--volt);
+  font-weight: 700;
+}
+
+.roster-empty,
+.draft-empty {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+}
+
+.roster-empty[hidden],
+.draft-empty[hidden] {
+  display: none;
+}
+
+.member-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+.member-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.35rem 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.chip-name {
+  padding-inline: 0.1rem 0.15rem;
+}
+
+.chip-mascot {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 1.4rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.chip-mascot:hover {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 2px var(--volt-glow);
+  transform: translateY(-1px);
+}
+
+.chip-remove {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.chip-remove:hover {
+  background: var(--loss);
+  color: #fff;
+}
+
+/* Mascot picker popover */
+.mascot-picker {
+  position: absolute;
+  z-index: 300;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+  max-width: 340px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+}
+
+.mascot-picker[hidden] {
+  display: none;
+}
+
+.mascot-option {
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  font-size: 1.7rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.mascot-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.mascot-option.selected {
+  background: var(--volt);
+}
+
+.mascot-option:disabled,
+.mascot-option.taken {
+  opacity: 0.22;
+  cursor: not-allowed;
+}
+
+.mascot-option.taken:hover {
+  background: transparent;
+  transform: none;
+}
+
+/* Draft board */
+.draft-actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.cta:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.draft-meta {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.2rem;
+  min-height: 1em;
+}
+
+.draft-board {
+  list-style: none;
+  counter-reset: pick;
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+}
+
+.draft-board:empty {
+  display: none;
+}
+
+.draft-pick {
+  counter-increment: pick;
+  background: var(--surface);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 1.6rem);
+  padding: 1rem clamp(1.1rem, 3vw, 1.8rem);
+  transition: background 0.2s ease;
+}
+
+.draft-pick:hover {
+  background: var(--surface-2);
+}
+
+.draft-pick::before {
+  content: counter(pick, decimal-leading-zero);
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 5vw, 2.8rem);
+  line-height: 0.8;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--volt-deep);
+  text-stroke: 1.5px var(--volt-deep);
+  min-width: 2ch;
+}
+
+.draft-pick .pick-name {
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--heading-color);
+}
+
+/* First overall pick gets the volt treatment */
+.draft-pick:first-child {
+  background: linear-gradient(90deg, rgba(204, 255, 0, 0.08), transparent 60%);
+}
+
+.draft-pick:first-child::before {
+  color: var(--volt);
+  -webkit-text-stroke: 0;
+  text-stroke: 0;
+}
+
+.draft-pick:first-child .pick-name {
+  color: var(--volt);
+}
+
+/* Draft race ("field dash") */
+.race-stage {
+  margin-bottom: 1.6rem;
+}
+
+.race-scoreboard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.race-status {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  color: var(--text);
+}
+
+/* Race-length control */
+.race-options {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.race-options input {
+  width: 74px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius);
+}
+
+.race-options input:focus {
+  outline: none;
+  border-color: var(--volt);
+  box-shadow: 0 0 0 3px var(--volt-glow);
+}
+
+/* Field viewport — a window the field scrolls through, right → left */
+.race-field {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  background: var(--ink-2);
+}
+
+/* The world is wider than the viewport and pans under a following camera */
+.race-world {
+  position: relative;
+  padding: 12px 0;
+  will-change: transform;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 78px, rgba(255, 255, 255, 0.1) 78px 82px),
+    linear-gradient(180deg, #0f3826 0%, #0b2c1c 55%, #0a2417 100%);
+}
+
+.race-track {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lane {
+  position: relative;
+  height: 52px;
+}
+
+.racer {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translate(0, -50%);
+  will-change: transform;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  z-index: 1;
+}
+
+.racer-mascot {
+  display: inline-block;
+  font-size: 2rem;
+  line-height: 1;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45));
+  animation: racerBob 0.34s ease-in-out infinite;
+}
+
+/* Most emoji face left by default — flip so they run toward the finish (right) */
+.mascot-glyph {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
+.racer.finished .racer-mascot {
+  animation: none;
+}
+
+.lane.winner .racer-mascot {
+  animation: winnerHop 0.5s ease-in-out infinite;
+}
+
+@keyframes racerBob {
+  50% { transform: translateY(-3px) rotate(-6deg); }
+}
+
+@keyframes winnerHop {
+  50% { transform: translateY(-6px) scale(1.18); }
+}
+
+.racer-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #eaf2ea;
+  background: rgba(10, 13, 18, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 1px 6px;
+  border-radius: 999px;
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lane.winner .racer-tag {
+  color: var(--ink);
+  background: var(--volt);
+  border-color: var(--volt);
+}
+
+.racer-place {
+  position: absolute;
+  top: -7px;
+  right: -11px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.6rem;
+  line-height: 16px;
+  text-align: center;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.2s ease, transform 0.2s var(--ease);
+}
+
+.racer.finished .racer-place {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.lane.winner .racer-place {
+  background: var(--volt);
+  border-color: var(--volt);
+  color: var(--ink);
+  font-size: 0.72rem;
+}
+
+/* Finish line across the field, with an end-zone glow beyond it */
+.race-finish {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  z-index: 0;
+  background: repeating-linear-gradient(180deg, #fff 0 7px, #0a0d12 7px 14px);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.3);
+}
+
+.race-finish::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 7px;
+  width: 150px;
+  background: linear-gradient(90deg, rgba(204, 255, 0, 0.18), transparent);
+}
+
+/* Field + results laid out side by side; results sits OUTSIDE the field */
+.race-layout {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.race-layout .race-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Live draft order, to the right of the field */
+.race-results {
+  flex: 0 0 clamp(150px, 22vw, 210px);
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 420px;
+  overflow-y: auto;
+  align-self: stretch;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  font-family: var(--font-mono);
+}
+
+.race-results li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+.race-results .rp {
+  min-width: 1.7em;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: right;
+}
+
+.race-results .rn {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.race-results li.winner {
+  background: var(--volt);
+  color: var(--ink);
+}
+
+.race-results li.winner .rp {
+  color: var(--ink);
+}
+
+@media (max-width: 720px) {
+  .race-layout {
+    flex-direction: column;
+  }
+
+  .race-results {
+    flex: 1 1 auto;
+    max-height: 180px;
+  }
+}
+
+.race-countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 13vw, 9rem);
+  color: var(--volt);
+  text-shadow: 0 0 40px var(--volt-glow);
+}
+
+.race-countdown.go {
+  animation: countPop 0.6s var(--ease);
+}
+
+@keyframes countPop {
+  0% { opacity: 0; transform: scale(0.4); }
+  40% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+
+/* ------------------------------------------------------------------ */
 /* Footer                                                              */
 /* ------------------------------------------------------------------ */
 footer {
